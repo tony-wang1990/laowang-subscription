@@ -6,7 +6,8 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+// Zeabur uses WEB_PORT, other platforms use PORT
+const PORT = process.env.WEB_PORT || process.env.PORT || 8080;
 
 // Middleware
 app.use(cors());
