@@ -1,0 +1,578 @@
+<template>
+  <div class="dashboard-container">
+    <header class="dashboard-header">
+      <div class="header-left">
+        <div class="logo">🧭</div>
+        <h1 class="rainbow-text">LaoWang Subscription</h1>
+      </div>
+      <div class="header-right">
+        <div class="info-group time-group">
+           <div class="date-row">
+             <span class="year">{{ dateParts.year }}年</span>
+             <span class="month">{{ dateParts.month }}月</span>
+             <span class="day">{{ dateParts.day }}日</span>
+           </div>
+           <div class="weekday">{{ dateParts.weekday }}</div>
+        </div>
+        
+        <div class="info-group weather-group">
+           <div class="temp">25°C</div>
+           <div class="weather">晴</div>
+        </div>
+
+        <a href="https://github.com/tony-wang1990/laowang-subscription" target="_blank" class="github-link">
+           <span class="g">G</span><span class="i">i</span><span class="t">t</span><span class="h">H</span><span class="u">u</span><span class="b">b</span>
+        </a>
+        
+        <div class="divider"></div>
+
+        <button class="nav-btn" @click="fetchSubscriptions">
+          <span>列表</span>
+        </button>
+        <button class="nav-btn" @click="router.push('/settings')">
+          <span>设置</span>
+        </button>
+        <button class="btn-logout" @click="logout">
+          <span>退出</span>
+        </button>
+      </div>
+    </header>
+    
+    <main class="dashboard-content">
+      <div class="content-header">
+        <h2>订阅列表</h2>
+        <p>使用搜索与分类快速定位订阅，开启农历显示可同步查看农历日期</p>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-wrapper">
+          <input 
+            v-model="searchQuery" 
+            type="text" 
+            placeholder="🔍 搜索名称、类型或备注..."
+            @input="debounceSearch"
+          >
+        </div>
+        <div class="filter-wrapper">
+          <select v-model="filterCategory" @change="fetchSubscriptions">
+            <option value="all">全部分类</option>
+            <option v-for="cat in categoryOptions" :key="cat" :value="cat">
+              {{ cat }}
+            </option>
+            <option disabled>──────</option>
+            <option value="custom" disabled>手动输入分类即可添加</option>
+          </select>
+        </div>
+        <div class="toggle-wrapper">
+          <label><input type="checkbox"> 显示农历</label>
+        </div>
+        <button class="btn-add" @click="openAddModal">＋ 添加新订阅</button>
+      </div>
+      
+      <div class="subscription-table">
+        <div class="table-header">
+           <div class="th name">名称</div>
+           <div class="th type">类型</div>
+           <div class="th date">到期时间</div>
+           <div class="th remind">提醒设置</div>
+           <div class="th status">状态</div>
+           <div class="th actions">操作</div>
+        </div>
+        
+        <div v-if="loading" class="loading-state">加载中...</div>
+        
+        <div v-else v-for="sub in subscriptions" :key="sub.id" class="table-row">
+           <!-- 名称 -->
+           <div class="td name">
+              <div class="main-text">{{ sub.name }}</div>
+              <div class="sub-text">{{ sub.notes || '无备注' }}</div>
+           </div>
+           
+           <!-- 类型 -->
+           <div class="td type">
+              <div class="category-badge">
+                 <span class="icon">{{ getCategoryIcon(sub.category) }}</span>
+                 {{ sub.category }}
+              </div>
+              <div class="cycle-info">
+                 周期: {{ sub.cycle_value }}{{ getUnitText(sub.cycle_unit) }}
+                 <span class="refresh-icon">🔄</span>
+              </div>
+              <div class="tag-info">🏷️ 公历</div>
+           </div>
+           
+           <!-- 到期时间 -->
+           <div class="td date">
+              <div class="main-date">{{ formatDate(sub.expire_date) }}</div>
+              <div class="lunar-date">农历: 暂无数据</div>
+              <div class="days-left" :class="getDaysLeftClass(sub.daysLeft)">
+                 还剩{{ sub.daysLeft }}天
+              </div>
+              <div class="start-date">开始: {{ formatDate(sub.created_at) }}</div>
+           </div>
+           
+           <!-- 提醒设置 -->
+           <div class="td remind">
+              🔔 提前{{ sub.remind_days }}天
+           </div>
+           
+           <!-- 状态 -->
+           <div class="td status">
+              <span class="status-pill" :class="sub.status === 'active' ? 'active' : 'inactive'">
+                <span class="dot"></span>
+                {{ sub.status === 'active' ? '正常' : '停用' }}
+              </span>
+           </div>
+           
+           <!-- 操作 (2x2 Grid) -->
+           <div class="td actions">
+              <div class="action-grid">
+                 <button class="btn-act edit" @click="openEditModal(sub)">
+                   📝 编辑
+                 </button>
+                 <button class="btn-act test" @click="testNotify(sub)">
+                   ✈️ 测试
+                 </button>
+                 <button class="btn-act delete" @click="deleteSubscription(sub.id)">
+                   🗑️ 删除
+                 </button>
+                 <button 
+                    class="btn-act stop" 
+                    :class="{ 'paused': sub.status !== 'active' }"
+                    @click="toggleStatus(sub)"
+                 >
+                   {{ sub.status === 'active' ? '⏸ 停用' : '▶ 启用' }}
+                 </button>
+              </div>
+           </div>
+        </div>
+      </div>
+    </main>
+    
+    <SubscriptionModal 
+      :isOpen="isModalOpen" 
+      :editData="currentEdit"
+      @close="closeModal"
+      @save="saveSubscription"
+    />
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import SubscriptionModal from '../components/SubscriptionModal.vue'
+
+const router = useRouter()
+const subscriptions = ref([])
+const loading = ref(false)
+const searchQuery = ref('')
+const filterCategory = ref('all')
+const isModalOpen = ref(false)
+const currentEdit = ref(null)
+const currentTime = ref('')
+const dateParts = ref({ year: '', month: '', day: '', weekday: '' })
+
+// Dynamic categories with defaults
+const categoryOptions = computed(() => {
+  const defaults = ['VPS', '域名', '软件', '会员', '电话卡', '其他']
+  const existing = subscriptions.value.map(s => s.category).filter(Boolean)
+  // Merge and deduplicate
+  return [...new Set([...defaults, ...existing])]
+})
+
+onMounted(() => {
+  fetchSubscriptions()
+  updateTime()
+  setInterval(updateTime, 1000)
+})
+
+const updateTime = () => {
+  const now = new Date()
+  // Maintain simple string for document title or other uses if needed
+  currentTime.value = now.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })
+  
+  // Update detailed parts for header
+  dateParts.value = {
+    year: now.getFullYear(),
+    month: (now.getMonth() + 1).toString().padStart(2, '0'),
+    day: now.getDate().toString().padStart(2, '0'),
+    weekday: now.toLocaleDateString('zh-CN', { weekday: 'long', timeZone: 'Asia/Shanghai' })
+  }
+}
+
+// Reuse fetch logic but simplified for brevity in this replace
+const fetchSubscriptions = async () => {
+  loading.value = true
+  const token = localStorage.getItem('token')
+  try {
+     const params = new URLSearchParams()
+     if (searchQuery.value) params.append('search', searchQuery.value)
+     if (filterCategory.value !== 'all') params.append('category', filterCategory.value)
+     
+     const res = await fetch(`/api/subscriptions?${params.toString()}`, {
+       headers: { 'Authorization': `Bearer ${token}` }
+     })
+     const data = await res.json()
+     subscriptions.value = data.map(sub => ({
+       ...sub,
+       daysLeft: calculateDaysLeft(sub.expire_date)
+     }))
+  } catch (e) { console.error(e) } 
+  finally { loading.value = false }
+}
+
+const calculateDaysLeft = (dateStr) => {
+  const target = new Date(dateStr)
+  const now = new Date()
+  target.setHours(0,0,0,0)
+  now.setHours(0,0,0,0)
+  const diff = target - now
+  return Math.ceil(diff / (1000 * 60 * 60 * 24))
+}
+
+const getCategoryIcon = (cat) => {
+  if (!cat) return '📦'
+  if (cat.includes('宽带') || cat.includes('家宽')) return '❄️' // Snowflake for 'Winter/Home'? matching screenshot
+  if (cat.includes('电话') || cat.includes('保号')) return '📞'
+  if (cat.includes('域名')) return '🌐'
+  return '📦'
+}
+
+const getUnitText = (unit) => {
+  const map = { day: '天', month: '月', year: '年' }
+  return map[unit] || unit
+}
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
+}
+
+const getDaysLeftClass = (days) => {
+  if (days < 0) return 'text-red'
+  if (days <= 7) return 'text-orange'
+  return 'text-gray'
+}
+
+const openAddModal = () => { currentEdit.value = null; isModalOpen.value = true }
+const openEditModal = (sub) => { currentEdit.value = { ...sub }; isModalOpen.value = true }
+const closeModal = () => { isModalOpen.value = false; currentEdit.value = null }
+
+const saveSubscription = async (formData) => {
+  const token = localStorage.getItem('token')
+  const method = currentEdit.value ? 'PUT' : 'POST'
+  const url = currentEdit.value ? `/api/subscriptions/${currentEdit.value.id}` : '/api/subscriptions'
+  
+  await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify(formData)
+  })
+  closeModal()
+  fetchSubscriptions()
+}
+
+const deleteSubscription = async (id) => {
+  if (!confirm('确认删除？')) return
+  const token = localStorage.getItem('token')
+  await fetch(`/api/subscriptions/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
+  fetchSubscriptions()
+}
+
+// New Actions
+const testNotify = async (sub) => {
+  alert('测试通知发送中... (后端需对接)')
+}
+
+const toggleStatus = async (sub) => {
+  const newStatus = sub.status === 'active' ? 'inactive' : 'active'
+  const token = localStorage.getItem('token')
+  // We need to update just status. Reusing update endpoint for now.
+  const payload = { ...sub, status: newStatus }
+  
+  await fetch(`/api/subscriptions/${sub.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify(payload)
+  })
+  fetchSubscriptions()
+}
+
+const logout = () => {
+  localStorage.removeItem('token')
+  router.push('/login')
+}
+
+let timeout
+const debounceSearch = () => {
+  clearTimeout(timeout)
+  timeout = setTimeout(fetchSubscriptions, 300)
+}
+</script>
+
+<style scoped>
+.dashboard-container {
+  min-height: 100vh;
+  background: #f3f4f6; /* Keep body light for contrast */
+}
+
+/* Header Styles */
+.dashboard-header {
+  background: #111827; /* Dark background */
+  height: 70px;
+  padding: 0 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  color: #fff;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.logo { font-size: 28px; }
+
+/* Rainbow Text */
+.rainbow-text {
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(to right, #4ade80, #60a5fa, #a78bfa, #f472b6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: 1px;
+}
+
+.header-right { 
+  display: flex; 
+  align-items: center; 
+  gap: 25px; 
+}
+
+.info-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.2;
+}
+
+.time-group {
+  text-align: right;
+  border-right: 1px solid #374151;
+  padding-right: 20px;
+}
+
+.date-row {
+  font-family: 'Consolas', monospace;
+  font-weight: 700;
+  font-size: 18px;
+}
+.year { color: #4ade80; } /* Green */
+.month { color: #38bdf8; } /* Blue */
+.day { color: #818cf8; } /* Indigo */
+
+.weekday {
+  font-size: 12px;
+  color: #4ade80;
+  text-align: left;
+}
+
+.weather-group {
+  text-align: left;
+  margin-right: 10px;
+}
+.temp {
+  font-size: 18px;
+  font-weight: 700;
+  color: #4ade80;
+}
+.weather {
+  font-size: 12px;
+  color: #38bdf8;
+}
+
+.github-link {
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 2px;
+  margin-right: 10px;
+  transition: transform 0.2s;
+}
+.github-link:hover { transform: scale(1.05); }
+
+.github-link .g { color: #4ade80; }
+.github-link .i { color: #38bdf8; }
+.github-link .t { color: #818cf8; }
+.github-link .h { color: #c084fc; }
+.github-link .u { color: #f472b6; }
+.github-link .b { color: #fbbf24; }
+
+.divider {
+  width: 1px;
+  height: 30px;
+  background: #374151;
+}
+
+.nav-btn, .btn-logout { 
+  background: none; 
+  font-size: 14px; 
+  color: #9ca3af; 
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 4px;
+}
+.nav-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+.btn-logout:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
+
+.dashboard-content { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+.content-header { margin-bottom: 20px; }
+.content-header h2 { font-size: 24px; margin: 0 0 5px 0; color: #1e293b; }
+.content-header p { margin: 0; color: #94a3b8; font-size: 14px; }
+
+.toolbar {
+  background: #fff;
+  padding: 15px 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+.search-wrapper { flex: 1; }
+.search-wrapper input {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.filter-wrapper select {
+  padding: 10px 15px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  min-width: 150px;
+}
+
+.toggle-wrapper {
+  margin-right: 15px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.btn-add {
+  background: #6366f1;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
+}
+
+/* Table Styles */
+.subscription-table {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 2fr 1.2fr 1fr 1.8fr;
+  padding: 15px 20px;
+  background: #fafaf9;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 2fr 1.2fr 1fr 1.8fr;
+  padding: 20px;
+  border-bottom: 1px solid #f1f5f9;
+  align-items: flex-start;
+  transition: background 0.2s;
+}
+
+.table-row:hover { background: #f8fafc; }
+
+/* Column Specifics */
+.td.name .main-text { font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 4px; }
+.td.name .sub-text { font-size: 13px; color: #94a3b8; }
+
+.category-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #475569;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+.cycle-info, .tag-info { font-size: 12px; color: #64748b; margin-bottom: 2px; }
+.cycle-info .refresh-icon { color: #3b82f6; font-size: 10px; margin-left: 4px; }
+
+.td.date { font-size: 14px; }
+.main-date { font-weight: 600; color: #334155; }
+.lunar-date { color: #6366f1; font-size: 12px; margin: 2px 0; }
+.days-left { font-size: 13px; margin: 2px 0; }
+.text-red { color: #ef4444; font-weight: 600; }
+.text-orange { color: #f59e0b; }
+.text-gray { color: #64748b; }
+.start-date { font-size: 12px; color: #94a3b8; margin-top: 5px; }
+
+.td.remind { display: flex; align-items: center; gap: 5px; font-weight: 600; color: #1e293b; }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.status-pill.active { background: #ecfdf5; color: #10b981; }
+.status-pill.inactive { background: #f3f4f6; color: #94a3b8; }
+.status-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* Action Grid */
+.action-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.btn-act {
+  border: none;
+  border-radius: 4px;
+  padding: 6px;
+  font-size: 12px;
+  color: white;
+  font-weight: 500;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.btn-act:hover { opacity: 0.9; }
+
+.btn-act.edit { background: #8b5cf6; }
+.btn-act.test { background: #3b82f6; }
+.btn-act.delete { background: #ef4444; }
+.btn-act.stop { background: #f59e0b; }
+.btn-act.stop.paused { background: #10b981; } /* Green for Enable */
+</style>
