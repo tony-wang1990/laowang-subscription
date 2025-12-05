@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: laowang-subscription
+    env: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8080

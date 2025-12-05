@@ -38,34 +38,60 @@
 
 ---
 
-## 🚀 部署方式
+## 🚀 一键部署
 
-### 方式一：Zeabur 部署（推荐）
+### 方式一：Railway（推荐 ⭐）
 
-无需服务器，适合新手用户。
+免费额度每月 $5，无需信用卡即可开始。
 
-**部署步骤：**
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/laowang-subscription?referralCode=tony)
 
-1. 登录 [Zeabur 控制台](https://zeabur.com)
-2. 创建新项目，选择 **"从 GitHub 部署"**
-3. 搜索并选择 `laowang-subscription` 仓库
-4. 等待自动构建完成（约 1-2 分钟）
-5. 绑定域名后即可访问
-
-> ⚠️ **注意**: 需要 Fork 本仓库到你的 GitHub 账户，或直接导入仓库 URL。
+**或手动部署：**
+1. 登录 [Railway](https://railway.app)
+2. 点击 "New Project" → "Deploy from GitHub repo"
+3. 选择 `laowang-subscription` 仓库
+4. 等待部署完成，点击生成的域名访问
 
 ---
 
-### 方式二：Docker Compose 部署
+### 方式二：Render
 
-适用于有 Docker 环境的 VPS (Linux/Mac/Windows)。
+免费套餐可用，部署简单。
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/tony-wang1990/laowang-subscription)
+
+---
+
+### 方式三：Fly.io
+
+全球边缘部署，速度快。
 
 ```bash
-# 1. 克隆仓库
+# 安装 flyctl
+curl -L https://fly.io/install.sh | sh
+
+# 登录
+flyctl auth login
+
+# 克隆并部署
+git clone https://github.com/tony-wang1990/laowang-subscription.git
+cd laowang-subscription
+flyctl launch
+flyctl deploy
+```
+
+---
+
+### 方式四：Docker Compose（VPS）
+
+适用于有 Docker 环境的 VPS。
+
+```bash
+# 克隆仓库
 git clone https://github.com/tony-wang1990/laowang-subscription.git
 cd laowang-subscription
 
-# 2. 一键启动
+# 一键启动
 docker-compose up -d
 ```
 
@@ -73,20 +99,16 @@ docker-compose up -d
 
 ---
 
-### 方式三：手动部署 (Node.js)
+### 方式五：手动部署 (Node.js)
 
-适用于 Linux VPS 或本地环境（需安装 Node.js 18+）。
+适用于 Linux VPS（需安装 Node.js 20+）。
 
 ```bash
-# 1. 克隆仓库
 git clone https://github.com/tony-wang1990/laowang-subscription.git
 cd laowang-subscription
 
-# 2. 安装依赖并构建前端
 npm install
 npm run build
-
-# 3. 启动服务
 npm start
 ```
 
@@ -95,14 +117,9 @@ npm start
 ## 🛠️ 本地开发
 
 ```bash
-# 克隆代码
 git clone https://github.com/tony-wang1990/laowang-subscription.git
 cd laowang-subscription
-
-# 安装依赖
 npm install
-
-# 启动开发服务器（同时启动前端 Vite 和后端 Express）
 npm run dev
 ```
 
@@ -115,28 +132,15 @@ npm run dev
 默认管理员账号：`admin`，密码：`admin`  
 首次登录后请立即在"设置"页面修改密码。
 
-### Cloudflare Pages 可以部署吗？
-
-**不可以**。本项目包含后端服务 (Express + SQLite)，Cloudflare Pages 仅支持纯静态网页。  
-推荐使用 Zeabur、Railway、Fly.io 或自建 VPS。
-
-### Zeabur 部署失败怎么办？
-
-常见原因及解决方法：
-
-1. **Node.js 版本问题**  
-   本项目需要 Node.js 18+，请在 Zeabur 项目设置中手动指定 Node 版本。
-
-2. **构建超时**  
-   首次构建可能需要较长时间，请耐心等待。
-
-3. **依赖安装失败**  
-   检查网络连接，或尝试重新部署。
-
 ### 如何添加 HTTPS？
 
-- **Zeabur**: 绑定域名后自动配置 SSL
+- **Railway/Render/Fly.io**: 自动配置 SSL
 - **自建 VPS**: 推荐使用 Nginx + Let's Encrypt 反向代理
+
+### 数据存储在哪里？
+
+数据存储在 SQLite 数据库文件中（`database/subscription.db`）。  
+建议定期备份此文件。
 
 ---
 
