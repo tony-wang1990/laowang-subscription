@@ -1,9 +1,20 @@
 {
     "serviceName": "laowang-subscription",
+    "runtime": "node18",
     "build": {
         "command": "npm install && npm run build"
     },
     "start": {
         "command": "npm start"
+    },
+    "ports": [
+        {
+            "port": 3000,
+            "type": "HTTP"
+        }
+    ],
+    "env": {
+        "NODE_ENV": "production",
+        "PORT": "3000"
     }
 }
