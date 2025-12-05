@@ -26,11 +26,30 @@ jobs:
           tags: laowang-subscription:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          load: true
 
-      - name: Test Docker image
+      - name: Test Docker container
         run: |
-          docker build -t laowang-subscription:test .
-          docker run -d --name test-container -p 3000:3000 laowang-subscription:test
-          sleep 10
-          curl -f http://localhost:3000/api/health || exit 1
+          # Start container in background
+          docker run -d --name test-container -p 3000:3000 laowang-subscription:latest
+          
+          # Wait for server to be ready (up to 60 seconds)
+          echo "Waiting for server to start..."
+          for i in {1..30}; do
+            if curl -s http://localhost:3000/api/health > /dev/null 2>&1; then
+              echo "Server is ready!"
+              break
+            fi
+            echo "Attempt $i: Server not ready yet, waiting..."
+            sleep 2
+          done
+          
+          # Final health check
+          curl -f http://localhost:3000/api/health || {
+            echo "Server failed to start. Showing logs:"
+            docker logs test-container
+            exit 1
+          }
+          
+          # Cleanup
           docker stop test-container
