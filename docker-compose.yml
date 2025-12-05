@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  app:
+    image: laowang-subscription:latest
+    build: .
+    container_name: laowang-subscription
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./database:/app/database
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=change_this_to_a_secure_secret
+      - HASH_SECRET=change_this_to_a_secure_secret

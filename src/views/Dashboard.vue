@@ -6,6 +6,15 @@
         <h1 class="rainbow-text">LaoWang Subscription</h1>
       </div>
       <div class="header-right">
+        <!-- Theme Switcher -->
+        <div class="theme-switcher">
+          <select v-model="themeMode" @change="handleThemeChange">
+            <option value="light">☀️ 浅色</option>
+            <option value="dark">🌙 深色</option>
+            <option value="system">🖥️ 系统</option>
+          </select>
+        </div>
+
         <div class="info-group time-group">
            <div class="date-row">
              <span class="year">{{ dateParts.year }}年</span>
@@ -159,7 +168,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import SubscriptionModal from '../components/SubscriptionModal.vue'
 
@@ -173,6 +182,36 @@ const currentEdit = ref(null)
 const currentTime = ref('')
 const dateParts = ref({ year: '', month: '', day: '', weekday: '' })
 
+// Theme Logic
+const themeMode = ref(localStorage.getItem('themeMode') || 'system')
+
+const applyTheme = () => {
+  const root = document.documentElement
+  let isDark = false
+
+  if (themeMode.value === 'system') {
+    isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  } else {
+    isDark = themeMode.value === 'dark'
+  }
+
+  if (isDark) {
+    root.setAttribute('data-theme', 'dark')
+  } else {
+    root.removeAttribute('data-theme')
+  }
+}
+
+const handleThemeChange = () => {
+  localStorage.setItem('themeMode', themeMode.value)
+  applyTheme()
+}
+
+// Watch system preference changes
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if (themeMode.value === 'system') applyTheme()
+})
+
 // Dynamic categories with defaults
 const categoryOptions = computed(() => {
   const defaults = ['VPS', '域名', '软件', '会员', '电话卡', '其他']
@@ -185,14 +224,13 @@ onMounted(() => {
   fetchSubscriptions()
   updateTime()
   setInterval(updateTime, 1000)
+  applyTheme() // Init theme
 })
 
 const updateTime = () => {
   const now = new Date()
-  // Maintain simple string for document title or other uses if needed
   currentTime.value = now.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })
   
-  // Update detailed parts for header
   dateParts.value = {
     year: now.getFullYear(),
     month: (now.getMonth() + 1).toString().padStart(2, '0'),
@@ -233,7 +271,7 @@ const calculateDaysLeft = (dateStr) => {
 
 const getCategoryIcon = (cat) => {
   if (!cat) return '📦'
-  if (cat.includes('宽带') || cat.includes('家宽')) return '❄️' // Snowflake for 'Winter/Home'? matching screenshot
+  if (cat.includes('宽带') || cat.includes('家宽')) return '❄️'
   if (cat.includes('电话') || cat.includes('保号')) return '📞'
   if (cat.includes('域名')) return '🌐'
   return '📦'
@@ -288,7 +326,6 @@ const testNotify = async (sub) => {
 const toggleStatus = async (sub) => {
   const newStatus = sub.status === 'active' ? 'inactive' : 'active'
   const token = localStorage.getItem('token')
-  // We need to update just status. Reusing update endpoint for now.
   const payload = { ...sub, status: newStatus }
   
   await fetch(`/api/subscriptions/${sub.id}`, {
@@ -314,19 +351,22 @@ const debounceSearch = () => {
 <style scoped>
 .dashboard-container {
   min-height: 100vh;
-  background: #f3f4f6; /* Keep body light for contrast */
+  background: var(--bg-page);
+  color: var(--text-main);
+  transition: background-color 0.3s, color 0.3s;
 }
 
 /* Header Styles */
 .dashboard-header {
-  background: #111827; /* Dark background */
+  background: var(--bg-header);
   height: 70px;
   padding: 0 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  color: #fff;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-main);
+  transition: background-color 0.3s, border-color 0.3s;
 }
 
 .header-left {
@@ -337,7 +377,6 @@ const debounceSearch = () => {
 
 .logo { font-size: 28px; }
 
-/* Rainbow Text */
 .rainbow-text {
   font-size: 24px;
   font-weight: 800;
@@ -355,6 +394,17 @@ const debounceSearch = () => {
   gap: 25px; 
 }
 
+/* Theme Switcher */
+.theme-switcher select {
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-input);
+  color: var(--text-main);
+  font-size: 13px;
+  cursor: pointer;
+}
+
 .info-group {
   display: flex;
   flex-direction: column;
@@ -364,7 +414,7 @@ const debounceSearch = () => {
 
 .time-group {
   text-align: right;
-  border-right: 1px solid #374151;
+  border-right: 1px solid var(--border-color);
   padding-right: 20px;
 }
 
@@ -373,9 +423,9 @@ const debounceSearch = () => {
   font-weight: 700;
   font-size: 18px;
 }
-.year { color: #4ade80; } /* Green */
-.month { color: #38bdf8; } /* Blue */
-.day { color: #818cf8; } /* Indigo */
+.year { color: #4ade80; }
+.month { color: #38bdf8; }
+.day { color: #818cf8; }
 
 .weekday {
   font-size: 12px;
@@ -383,19 +433,9 @@ const debounceSearch = () => {
   text-align: left;
 }
 
-.weather-group {
-  text-align: left;
-  margin-right: 10px;
-}
-.temp {
-  font-size: 18px;
-  font-weight: 700;
-  color: #4ade80;
-}
-.weather {
-  font-size: 12px;
-  color: #38bdf8;
-}
+.weather-group { text-align: left; margin-right: 10px; }
+.temp { font-size: 18px; font-weight: 700; color: #4ade80; }
+.weather { font-size: 12px; color: #38bdf8; }
 
 .github-link {
   text-decoration: none;
@@ -406,7 +446,6 @@ const debounceSearch = () => {
   transition: transform 0.2s;
 }
 .github-link:hover { transform: scale(1.05); }
-
 .github-link .g { color: #4ade80; }
 .github-link .i { color: #38bdf8; }
 .github-link .t { color: #818cf8; }
@@ -417,57 +456,61 @@ const debounceSearch = () => {
 .divider {
   width: 1px;
   height: 30px;
-  background: #374151;
+  background: var(--border-color);
 }
 
 .nav-btn, .btn-logout { 
   background: none; 
   font-size: 14px; 
-  color: #9ca3af; 
+  color: var(--text-sub); 
   font-weight: 500;
   padding: 5px 10px;
   border-radius: 4px;
 }
-.nav-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+.nav-btn:hover { color: var(--text-main); background: rgba(128,128,128,0.1); }
 .btn-logout:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
 
 .dashboard-content { max-width: 1400px; margin: 0 auto; padding: 20px; }
 
 .content-header { margin-bottom: 20px; }
-.content-header h2 { font-size: 24px; margin: 0 0 5px 0; color: #1e293b; }
-.content-header p { margin: 0; color: #94a3b8; font-size: 14px; }
+.content-header h2 { font-size: 24px; margin: 0 0 5px 0; color: var(--text-main); }
+.content-header p { margin: 0; color: var(--text-sub); font-size: 14px; }
 
 .toolbar {
-  background: #fff;
+  background: var(--bg-card);
   padding: 15px 20px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   gap: 15px;
   margin-bottom: 25px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .search-wrapper { flex: 1; }
 .search-wrapper input {
   width: 100%;
   padding: 10px 15px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
   border-radius: 6px;
-  background: #f8fafc;
+  background: var(--bg-input);
+  color: var(--text-main);
 }
 
 .filter-wrapper select {
   padding: 10px 15px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   min-width: 150px;
+  background: var(--bg-input);
+  color: var(--text-main);
 }
 
 .toggle-wrapper {
   margin-right: 15px;
   font-size: 14px;
-  color: #64748b;
+  color: var(--text-sub);
 }
 
 .btn-add {
@@ -481,19 +524,21 @@ const debounceSearch = () => {
 
 /* Table Styles */
 .subscription-table {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 .table-header {
   display: grid;
   grid-template-columns: 2fr 1.5fr 2fr 1.2fr 1fr 1.8fr;
   padding: 15px 20px;
-  background: #fafaf9;
-  border-bottom: 1px solid #f0f0f0;
+  background: var(--bg-table-header);
+  border-bottom: 1px solid var(--border-color);
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--text-sub);
   font-weight: 600;
 }
 
@@ -501,38 +546,39 @@ const debounceSearch = () => {
   display: grid;
   grid-template-columns: 2fr 1.5fr 2fr 1.2fr 1fr 1.8fr;
   padding: 20px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border-color);
   align-items: flex-start;
   transition: background 0.2s;
+  color: var(--text-main);
 }
 
-.table-row:hover { background: #f8fafc; }
+.table-row:hover { background: var(--bg-hover); }
 
 /* Column Specifics */
-.td.name .main-text { font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 4px; }
-.td.name .sub-text { font-size: 13px; color: #94a3b8; }
+.td.name .main-text { font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 4px; }
+.td.name .sub-text { font-size: 13px; color: var(--text-sub); }
 
 .category-badge {
   display: flex;
   align-items: center;
   gap: 5px;
-  color: #475569;
+  color: var(--text-sub);
   font-weight: 600;
   margin-bottom: 5px;
 }
-.cycle-info, .tag-info { font-size: 12px; color: #64748b; margin-bottom: 2px; }
-.cycle-info .refresh-icon { color: #3b82f6; font-size: 10px; margin-left: 4px; }
+.cycle-info, .tag-info { font-size: 12px; color: var(--text-sub); margin-bottom: 2px; }
+.cycle-info .refresh-icon { color: #60a5fa; font-size: 10px; margin-left: 4px; }
 
 .td.date { font-size: 14px; }
-.main-date { font-weight: 600; color: #334155; }
-.lunar-date { color: #6366f1; font-size: 12px; margin: 2px 0; }
+.main-date { font-weight: 600; color: var(--text-main); }
+.lunar-date { color: #818cf8; font-size: 12px; margin: 2px 0; }
 .days-left { font-size: 13px; margin: 2px 0; }
-.text-red { color: #ef4444; font-weight: 600; }
-.text-orange { color: #f59e0b; }
-.text-gray { color: #64748b; }
-.start-date { font-size: 12px; color: #94a3b8; margin-top: 5px; }
+.text-red { color: #f87171; font-weight: 600; }
+.text-orange { color: #fbbf24; }
+.text-gray { color: var(--text-sub); }
+.start-date { font-size: 12px; color: var(--text-sub); margin-top: 5px; }
 
-.td.remind { display: flex; align-items: center; gap: 5px; font-weight: 600; color: #1e293b; }
+.td.remind { display: flex; align-items: center; gap: 5px; font-weight: 600; color: var(--text-main); }
 
 .status-pill {
   display: inline-flex;
@@ -543,8 +589,8 @@ const debounceSearch = () => {
   font-size: 13px;
   font-weight: 600;
 }
-.status-pill.active { background: #ecfdf5; color: #10b981; }
-.status-pill.inactive { background: #f3f4f6; color: #94a3b8; }
+.status-pill.active { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.status-pill.inactive { background: rgba(156, 163, 175, 0.1); color: #9ca3af; }
 .status-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
 /* Action Grid */
@@ -574,5 +620,5 @@ const debounceSearch = () => {
 .btn-act.test { background: #3b82f6; }
 .btn-act.delete { background: #ef4444; }
 .btn-act.stop { background: #f59e0b; }
-.btn-act.stop.paused { background: #10b981; } /* Green for Enable */
+.btn-act.stop.paused { background: #10b981; }
 </style>
