@@ -4,7 +4,7 @@
   "description": "老王订阅管理系统 - 私有化订阅到期提醒服务",
   "main": "index.js",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",

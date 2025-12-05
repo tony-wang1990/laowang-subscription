@@ -1,6 +1,6 @@
 {
     "serviceName": "laowang-subscription",
-    "runtime": "node18",
+    "runtime": "node20",
     "build": {
         "command": "npm install && npm run build"
     },
