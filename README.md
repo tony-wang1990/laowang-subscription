@@ -101,15 +101,16 @@ docker-compose up -d
 
 ### 方式五：Zeabur（推荐中国用户 ⭐）
 
-支持中文界面，部署简单快速。
+支持中文界面，国内访问速度快，部署简单。
 
-[![Deploy on Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/LAOWANG-SUB?referralCode=tony)
-
-**或手动部署：**
+**部署步骤：**
 1. 登录 [Zeabur](https://zeabur.com)
 2. 点击 "Create Project" → "Deploy from GitHub"
-3. 选择 `laowang-subscription` 仓库
-4. 等待部署完成，点击生成的域名访问
+3. 授权并选择 `laowang-subscription` 仓库
+4. Zeabur 会自动识别项目配置并开始部署
+5. 等待部署完成，点击生成的域名访问
+
+> 💡 **提示**: 项目已包含 `zeabur.json` 配置文件，Zeabur 会自动使用正确的构建和启动命令。
 
 ---
 
