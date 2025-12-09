@@ -14,11 +14,23 @@
     --border-color: #e5e7eb;
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 
     --color-primary: #6366f1;
     --color-danger: #ef4444;
     --color-warning: #f59e0b;
     --color-success: #10b981;
+    --color-accent: #ef4444;
+    --color-bg-primary: #667eea;
+    --color-bg-secondary: #374151;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
 }
 
 [data-theme="dark"] {
