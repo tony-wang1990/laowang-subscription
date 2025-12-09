@@ -75,7 +75,7 @@
         <div class="toggle-wrapper">
           <label><input type="checkbox"> 显示农历</label>
         </div>
-        <button class="btn-add" @click="openAddModal">＋ 添加新订阅</button>
+        <button class="btn-add" @click="openAddModal">添加新订阅</button>
       </div>
       
       <div class="subscription-table">
@@ -137,20 +137,20 @@
            <div class="td actions">
               <div class="action-grid">
                  <button class="btn-act edit" @click="openEditModal(sub)">
-                   📝 编辑
+                   编 辑
                  </button>
                  <button class="btn-act test" @click="testNotify(sub)">
-                   ✈️ 测试
+                   测 试
                  </button>
                  <button class="btn-act delete" @click="deleteSubscription(sub.id)">
-                   🗑️ 删除
+                   删 除
                  </button>
                  <button 
                     class="btn-act stop" 
                     :class="{ 'paused': sub.status !== 'active' }"
                     @click="toggleStatus(sub)"
                  >
-                   {{ sub.status === 'active' ? '⏸ 停用' : '▶ 启用' }}
+                   {{ sub.status === 'active' ? '停 用' : '启 用' }}
                  </button>
               </div>
            </div>

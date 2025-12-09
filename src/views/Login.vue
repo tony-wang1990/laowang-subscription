@@ -30,7 +30,7 @@
         
         <button type="submit" :disabled="loading" class="login-btn">
           <span v-if="loading">登录中...</span>
-          <span v-else>📲 登录</span>
+          <span v-else>登 录</span>
         </button>
       </form>
       

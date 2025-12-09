@@ -80,8 +80,8 @@
         </div>
         
         <div class="modal-footer">
-          <button type="button" class="btn-cancel" @click="close">取消</button>
-          <button type="submit" class="btn-save">💾 保存</button>
+          <button type="button" class="btn-cancel" @click="close">取 消</button>
+          <button type="submit" class="btn-save">保 存</button>
         </div>
       </form>
     </div>
