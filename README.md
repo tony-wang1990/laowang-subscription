@@ -99,7 +99,21 @@ docker-compose up -d
 
 ---
 
-### 方式五：手动部署 (Node.js)
+### 方式五：Zeabur（推荐中国用户 ⭐）
+
+支持中文界面，部署简单快速。
+
+[![Deploy on Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/LAOWANG-SUB?referralCode=tony)
+
+**或手动部署：**
+1. 登录 [Zeabur](https://zeabur.com)
+2. 点击 "Create Project" → "Deploy from GitHub"
+3. 选择 `laowang-subscription` 仓库
+4. 等待部署完成，点击生成的域名访问
+
+---
+
+### 方式六：手动部署 (Node.js)
 
 适用于 Linux VPS（需安装 Node.js 20+）。
 
