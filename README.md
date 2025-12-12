@@ -1,6 +1,6 @@
 # 老王订阅管理系统 (LaoWang Subscription)
 
-这是一个基于 Vue 3 + Express 的一站式订阅管理系统，集成了 [SubConverter](https://github.com/tindy2013/subconverter) 订阅转换功能。它不仅仅是一个前端，更是一个完整的订阅管理解决方案。
+这是一个基于 Vue 3 + Express 的一站式订阅管理系统，它不仅仅是一个前端，更是一个完整的订阅管理解决方案。
 
 <p align="center">
   <a href="https://test.199060.xyz/" target="_blank">
