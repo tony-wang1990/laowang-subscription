@@ -32,13 +32,10 @@ COPY --from=builder /app/server ./server
 # Pre-create database directory
 RUN mkdir -p /app/database && chmod 777 /app/database
 
-# Copy debug scripts
-COPY server/debug.js ./server/debug.js
-COPY server/debug-express.js ./server/debug-express.js
-
 ENV NODE_ENV=production
 ENV PORT=8080
 EXPOSE 8080
 
-# Run Express Debug directly
-CMD ["node", "server/debug-express.js"]
+# Use dumb-init
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+CMD ["node", "server/index.js"]
