@@ -11,7 +11,7 @@ if (!fs.existsSync(dbDir)) {
 }
 
 const dbPath = path.resolve(dbDir, 'subscription.db');
-const schemaPath = path.resolve(dbDir, 'schema.sql');
+const schemaPath = path.resolve(__dirname, 'schema.sql');
 
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
