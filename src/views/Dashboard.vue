@@ -259,9 +259,27 @@ const updateTime = () => {
 }
 
 // 获取天气信息
+// 获取天气信息
 const fetchWeather = async () => {
   try {
-    // 使用 wttr.in 免费 API，获取北京天气
+    // 优先使用国内友好的免费 API (api.oioweb.cn) 支持 IP 自动定位
+    const res = await fetch('https://api.oioweb.cn/api/weather/weather')
+    const data = await res.json()
+    
+    if (data.code === 200 && data.result) {
+      const w = data.result
+      weather.value = {
+        temp: `${w.current_temperature}°C`,
+        condition: w.weather || '晴'
+      }
+      return // 成功则返回
+    }
+  } catch (e) {
+    console.warn('Primary weather API failed, trying fallback...')
+  }
+
+  // 降级使用 wttr.in
+  try {
     const res = await fetch('https://wttr.in/Beijing?format=%t|%C&lang=zh')
     const text = await res.text()
     const parts = text.split('|')
@@ -272,7 +290,7 @@ const fetchWeather = async () => {
       }
     }
   } catch (e) {
-    console.error('Weather fetch error:', e)
+    console.error('All weather providers failed:', e)
     weather.value = { temp: '--°C', condition: '未知' }
   }
 }
