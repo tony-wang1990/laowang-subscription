@@ -8,7 +8,21 @@
   </a>
 </p>
 
-![老王订阅管理系统](https://raw.githubusercontent.com/tony-wang1990/laowang-subscription/main/screenshot.png)
+
+## 📸 界面预览
+
+### 桌面端预览
+
+| 浅色模式 | 深色模式 |
+| :---: | :---: |
+| ![Light](docs/images/dashboard_light.png) | ![Dark](docs/images/dashboard_dark.png) |
+
+### 移动端预览
+
+| 浅色模式 | 深色模式 |
+| :---: | :---: |
+| ![Mobile Light](docs/images/settings_light.png) | ![Mobile Dark](docs/images/settings_dark.png) |
+
 
 ## ✨ 特性
 
