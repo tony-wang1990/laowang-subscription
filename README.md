@@ -2,6 +2,12 @@
 
 这是一个基于 Vue 3 + Express 的订阅转换前端项目，专为 [SubConverter](https://github.com/tindy2013/subconverter) 设计。它提供了现代化的用户界面，支持深色模式、多语言（中/英），并集成了丰富的配置选项。
 
+<p align="center">
+  <a href="https://test.199060.xyz/" target="_blank">
+    <img src="https://img.shields.io/badge/🔗_点击体验_DEMO-TEST.199060.XYZ-38b2ac?style=for-the-badge" alt="Demo">
+  </a>
+</p>
+
 ![老王订阅转换](https://raw.githubusercontent.com/tony-wang1990/laowang-subscription/main/screenshot.png)
 
 ## ✨ 特性
@@ -9,12 +15,12 @@
 -   🎨 **现代化 UI**: 采用 Tailwind CSS 构建，支持深色/浅色模式自动切换。
 -   📱 **响应式设计**: 完美适配桌面端和移动端。
 -   🌍 **多语言支持**: 内置英语和简体中文，根据浏览器语言自动切换。
--   �️ **强大配置**: 支持 SubConverter 所有主流配置项（远程配置、后端地址、包含/排除节点、文件名等）。
+-   🛠️ **强大配置**: 支持 SubConverter 所有主流配置项（远程配置、后端地址、包含/排除节点、文件名等）。
 -   ⚡ **实时预览**: 配置更改变动即时反映在生成的链接中。
 -   🔗 **短链接集成**: 完美支持 MyUrls 等短链接服务。
 -   🐳 **Docker 部署**: 提供多架构 (AMD64/ARM64) 镜像，一键部署。
 
-## � 部署指南 (VPS)
+## 🚀 部署指南 (VPS)
 
 本项目推荐使用 Docker 在 VPS 上进行部署。支持甲骨文 ARM (Oracle ARM) 及常规 AMD64 服务器。
 
@@ -87,7 +93,7 @@ docker run -d -p 8080:8080 laowang-subscription
 ## 📦 架构说明
 
 -   **Frontend**: Vue 3, Vite, Tailwind CSS
--   **Backend**: Node.js, Express, SQLite
+-   **Backend**: Node.js, Express, SQLite (better-sqlite3 / sqlite3)
 -   **Database**: SQLite (存储订阅历史和设置)
 
 ## 🤝 贡献
