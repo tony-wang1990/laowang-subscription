@@ -358,7 +358,23 @@ const deleteSubscription = async (id) => {
 
 // New Actions
 const testNotify = async (sub) => {
-  alert('测试通知发送中... (后端需对接)')
+  const token = localStorage.getItem('token')
+  if (!confirm(`确认要发送测试通知给 "${sub.name}" 吗？`)) return
+
+  try {
+    const res = await fetch(`/api/subscriptions/${sub.id}/test`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    const data = await res.json()
+    if (data.success) {
+      alert('✅ 测试通知已发送！请检查您的接收渠道。')
+    } else {
+      alert('❌ 发送失败: ' + (data.error || '未知错误'))
+    }
+  } catch (e) {
+    alert('❌ 发送失败: 网络或服务器错误')
+  }
 }
 
 const toggleStatus = async (sub) => {
