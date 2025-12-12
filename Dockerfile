@@ -32,7 +32,6 @@ RUN apt-get update && apt-get install -y python3 make g++ \
 # Copy server and built frontend
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server ./server
-COPY --from=builder /app/database ./database
 
 ENV NODE_ENV=production
 ENV PORT=8080
