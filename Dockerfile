@@ -1,10 +1,10 @@
 # Build Stage
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
 # Install build tools for native modules (sqlite3)
-RUN apk add --no-cache python3 make g++
+RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
 RUN npm install
@@ -13,19 +13,21 @@ COPY . .
 RUN npm run build
 
 # Production Stage
-FROM node:20-alpine
+FROM node:20-slim
 
 WORKDIR /app
 
 # Install runtime dependencies for sqlite3
-RUN apk add --no-cache python3
+RUN apt-get update && apt-get install -y python3 && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
 
-# Install build tools, install deps, then remove build tools to reduce image size
-RUN apk add --no-cache --virtual .build-deps python3 make g++ \
+# Install production dependencies
+RUN apt-get update && apt-get install -y python3 make g++ \
     && npm install --production \
-    && apk del .build-deps
+    && apt-get purge -y make g++ \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy server and built frontend
 COPY --from=builder /app/dist ./dist
