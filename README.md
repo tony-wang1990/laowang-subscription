@@ -17,11 +17,7 @@
 | :---: | :---: |
 | ![Light](docs/images/dashboard_light.png) | ![Dark](docs/images/dashboard_dark.png) |
 
-### 移动端预览
 
-| 浅色模式 | 深色模式 |
-| :---: | :---: |
-| ![Mobile Light](docs/images/settings_light.png) | ![Mobile Dark](docs/images/settings_dark.png) |
 
 
 ## ✨ 特性
