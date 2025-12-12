@@ -109,16 +109,7 @@
         </div>
       </section>
 
-      <!-- NotifyX -->
-      <section class="config-card highlight-border" v-if="config.enable_notifyx">
-        <div class="card-title">NotifyX 配置</div>
-        <div class="card-body">
-          <div class="form-group">
-            <label>API Key</label>
-            <input v-model="config.notifyx_key" type="text" placeholder="从 NotifyX 平台获取的 API Key">
-          </div>
-        </div>
-      </section>
+
 
       <!-- Bark -->
       <section class="config-card highlight-border" v-if="config.enable_bark">
@@ -186,16 +177,13 @@ const config = reactive({
   cron_expression: '0 0 * * *',
   // Channels
   enable_telegram: false,
-  enable_notifyx: false,
+  enable_bark: false,
   enable_webhook: false,
   enable_wechat: false,
-  enable_email: false,
-  enable_bark: false,
   // Configs
   api_token: '',
   telegram_token: '',
   telegram_chat_id: '',
-  notifyx_key: '',
   bark_url: '',
   webhook_url: '',
   wechat_key: ''
