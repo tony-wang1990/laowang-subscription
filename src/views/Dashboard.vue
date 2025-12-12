@@ -32,8 +32,14 @@
         </div>
         
         <div class="info-group weather-group">
-           <div class="temp">{{ weather.temp }}</div>
-           <div class="weather">{{ weather.condition }}</div>
+           <div class="weather-row user-location">
+             <span class="location-icon">📍</span>
+             {{ weather.location || '定位中...' }}
+           </div>
+           <div class="weather-row main-weather">
+             <span class="temp">{{ weather.temp }}</span>
+             <span class="condition">{{ weather.condition }}</span>
+           </div>
         </div>
 
         <a href="https://github.com/tony-wang1990/laowang-subscription" target="_blank" class="github-link">
@@ -190,7 +196,7 @@ const isModalOpen = ref(false)
 const currentEdit = ref(null)
 const currentTime = ref('')
 const dateParts = ref({ year: '', month: '', day: '', weekday: '' })
-const weather = ref({ temp: '--°C', condition: '加载中' })
+const weather = ref({ temp: '--', condition: '请稍候', location: '检查网络...' })
 
 // Theme Logic
 const themeMode = ref(localStorage.getItem('themeMode') || 'system')
@@ -258,40 +264,53 @@ const updateTime = () => {
   }
 }
 
-// 获取天气信息
-// 获取天气信息
+// 获取天气信息 - 多源自动切换 (增强中国地区支持)
 const fetchWeather = async () => {
+  // 1. 尝试使用 vvhan (国内极速源)
   try {
-    // 优先使用国内友好的免费 API (api.oioweb.cn) 支持 IP 自动定位
+    const res = await fetch('https://api.vvhan.com/api/weather')
+    const data = await res.json()
+    if (data.success && data.info) {
+      weather.value = {
+        temp: data.info.high.replace('°C', '') + '/' + data.info.low,
+        condition: data.info.type,
+        location: data.city || '本地'
+      }
+      return
+    }
+  } catch (e) { console.warn('VVHan weather failed', e) }
+
+  // 2. 尝试使用 oioweb (备用国内源)
+  try {
     const res = await fetch('https://api.oioweb.cn/api/weather/weather')
     const data = await res.json()
-    
     if (data.code === 200 && data.result) {
       const w = data.result
       weather.value = {
         temp: `${w.current_temperature}°C`,
-        condition: w.weather || '晴'
+        condition: w.weather || '晴',
+        location: w.city_name || '定位中'
       }
-      return // 成功则返回
+      return
     }
-  } catch (e) {
-    console.warn('Primary weather API failed, trying fallback...')
-  }
+  } catch (e) { console.warn('OioWeb weather failed', e) }
 
-  // 降级使用 wttr.in
+  // 3. 最后的兜底 - Wttr.in (国际源)
   try {
-    const res = await fetch('https://wttr.in/Beijing?format=%t|%C&lang=zh')
+    const res = await fetch('https://wttr.in/?format=%l:+%c+%t')
     const text = await res.text()
-    const parts = text.split('|')
+    // format like: "Beijing: ☀️ +20°C"
+    const parts = text.split(':')
     if (parts.length >= 2) {
       weather.value = {
-        temp: parts[0].trim(),
-        condition: parts[1].trim()
+        temp: parts[1].trim(),
+        condition: '', // icons included in temp part for wttr
+        location: parts[0].trim()
       }
     }
   } catch (e) {
-    console.error('All weather providers failed:', e)
-    weather.value = { temp: '--°C', condition: '未知' }
+    console.error('All weather providers failed')
+    weather.value = { temp: '--', condition: '离线', location: '未知' }
   }
 }
 
@@ -505,9 +524,21 @@ const debounceSearch = () => {
   text-align: left;
 }
 
-.weather-group { text-align: left; margin-right: 10px; }
-.temp { font-size: 18px; font-weight: 700; color: #4ade80; }
-.weather { font-size: 12px; color: #38bdf8; }
+.weather-group { 
+  text-align: right; 
+  margin-right: 15px; 
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+}
+.weather-row { display: flex; align-items: center; gap: 6px; }
+.main-weather { gap: 8px; }
+
+.temp { font-size: 19px; font-weight: 700; color: #4ade80; line-height: 1; }
+.condition { font-size: 14px; color: #38bdf8; font-weight: 600; }
+.user-location { font-size: 12px; color: #a78bfa; margin-top: 3px; font-weight: 500; }
+.location-icon { font-size: 10px; }
 
 .github-link {
   text-decoration: none;
@@ -785,7 +816,7 @@ const debounceSearch = () => {
   .info-group.weather-group {
     flex-direction: row;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     background: var(--bg-hover);
     padding: 0 12px;
     border-radius: 20px;
@@ -793,11 +824,24 @@ const debounceSearch = () => {
     height: 32px;
   }
   
+  .user-location {
+    font-size: 12px;
+    margin-top: 0;
+    padding-right: 8px;
+    border-right: 1px solid var(--text-sub);
+    max-width: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .location-icon { display: none; }
+
   .temp {
     font-size: 13px;
   }
   
-  .weather {
+  .condition {
     font-size: 12px;
   }
   
