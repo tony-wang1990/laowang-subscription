@@ -62,7 +62,7 @@ router.post('/', (req, res) => {
     });
 });
 
-// Test Notification
+// Test Notification - Telegram
 router.post('/test-telegram', async (req, res) => {
     const { token, chatId } = req.body;
     const { sendTelegramMessage } = require('../services/telegram');
@@ -73,6 +73,62 @@ router.post('/test-telegram', async (req, res) => {
             res.json({ success: true });
         } else {
             res.status(400).json({ error: '发送失败，请检查 Token 和 Chat ID' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Test Notification - Bark
+router.post('/test-bark', async (req, res) => {
+    const { barkUrl } = req.body;
+    const { sendBarkNotification } = require('../services/bark');
+
+    try {
+        const success = await sendBarkNotification(barkUrl, '🎉 LaoWang Subscription', '测试消息：您的 Bark 通知配置成功！');
+        if (success) {
+            res.json({ success: true });
+        } else {
+            res.status(400).json({ error: '发送失败，请检查 Bark URL' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Test Notification - Webhook
+router.post('/test-webhook', async (req, res) => {
+    const { webhookUrl } = req.body;
+    const { sendWebhookNotification } = require('../services/webhook');
+
+    try {
+        const payload = {
+            type: 'test',
+            message: '🎉 LaoWang Subscription 测试消息：您的 Webhook 通知配置成功！',
+            timestamp: new Date().toISOString()
+        };
+        const success = await sendWebhookNotification(webhookUrl, payload);
+        if (success) {
+            res.json({ success: true });
+        } else {
+            res.status(400).json({ error: '发送失败，请检查 Webhook URL' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Test Notification - WeChat
+router.post('/test-wechat', async (req, res) => {
+    const { wechatKey } = req.body;
+    const { sendWechatNotification } = require('../services/wechat');
+
+    try {
+        const success = await sendWechatNotification(wechatKey, '🎉 **LaoWang Subscription**\n测试消息：您的企业微信通知配置成功！');
+        if (success) {
+            res.json({ success: true });
+        } else {
+            res.status(400).json({ error: '发送失败，请检查 Webhook Key' });
         }
     } catch (err) {
         res.status(500).json({ error: err.message });

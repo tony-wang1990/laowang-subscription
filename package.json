@@ -1,6 +1,6 @@
 {
   "name": "laowang-subscription",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "老王订阅管理系统 - 私有化订阅到期提醒服务",
   "main": "index.js",
   "engines": {

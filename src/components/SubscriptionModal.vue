@@ -299,4 +299,78 @@ const save = () => {
   padding: 8px 16px;
   border-radius: var(--radius-md);
 }
+
+/* ========== 响应式适配 - 手机端 ========== */
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 0;
+  }
+  
+  .modal-content {
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+  
+  .modal-header {
+    padding: 15px;
+  }
+  
+  .modal-header h2 {
+    font-size: 16px;
+  }
+  
+  .modal-body {
+    padding: 15px;
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .form-group {
+    margin-bottom: 12px;
+  }
+  
+  .input-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .input-group select {
+    width: 100%;
+  }
+  
+  .date-input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .calc-btn {
+    margin-top: 0;
+  }
+  
+  .checkbox-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .modal-footer {
+    padding: 15px;
+    position: sticky;
+    bottom: 0;
+    background: white;
+  }
+  
+  .btn-cancel, .btn-save {
+    flex: 1;
+    padding: 12px;
+  }
+}
 </style>

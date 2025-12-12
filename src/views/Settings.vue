@@ -129,11 +129,45 @@
 
       <!-- Bark -->
       <section class="config-card highlight-border" v-if="config.enable_bark">
-        <div class="card-title">Bark 配置</div>
+        <div class="card-title">Bark 配置 (iOS)</div>
         <div class="card-body">
           <div class="form-group">
             <label>Bark Server URL</label>
             <input v-model="config.bark_url" type="text" placeholder="https://api.day.app/YourKey/">
+            <p class="help-text">从 Bark App 获取的推送 URL</p>
+          </div>
+          <div class="action-row">
+             <button class="btn-test" @click="testChannel('bark')">🚀 测试 Bark 通知</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Webhook -->
+      <section class="config-card highlight-border" v-if="config.enable_webhook">
+        <div class="card-title">Webhook 配置</div>
+        <div class="card-body">
+          <div class="form-group">
+            <label>Webhook URL</label>
+            <input v-model="config.webhook_url" type="text" placeholder="https://your-server.com/webhook">
+            <p class="help-text">接收 JSON 格式通知的 HTTP 端点</p>
+          </div>
+          <div class="action-row">
+             <button class="btn-test" @click="testChannel('webhook')">🚀 测试 Webhook 通知</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 企业微信 -->
+      <section class="config-card highlight-border" v-if="config.enable_wechat">
+        <div class="card-title">企业微信机器人配置</div>
+        <div class="card-body">
+          <div class="form-group">
+            <label>Webhook Key</label>
+            <input v-model="config.wechat_key" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+            <p class="help-text">企业微信群机器人的 Webhook Key（URL 中 key= 后面的部分）</p>
+          </div>
+          <div class="action-row">
+             <button class="btn-test" @click="testChannel('wechat')">🚀 测试企业微信通知</button>
           </div>
         </div>
       </section>
@@ -169,7 +203,9 @@ const config = reactive({
   telegram_token: '',
   telegram_chat_id: '',
   notifyx_key: '',
-  bark_url: ''
+  bark_url: '',
+  webhook_url: '',
+  wechat_key: ''
 })
 
 onMounted(async () => {
@@ -240,24 +276,54 @@ const updateAccount = () => {
 }
 
 const testChannel = async (channel) => {
-  if (channel === 'telegram') {
-    if (!config.telegram_token || !config.telegram_chat_id) return alert('请先填写配置')
-    const token = localStorage.getItem('token')
-    try {
-      const res = await fetch('/api/settings/test-telegram', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ token: config.telegram_token, chatId: config.telegram_chat_id })
-      })
-      const data = await res.json()
-      if (data.success) alert('Telegram 消息发送成功！')
-      else alert('发送失败')
-    } catch(e) { alert('测试出错') }
-  } else {
-    alert(`${channel} 测试功能开发中`)
+  const token = localStorage.getItem('token')
+  
+  try {
+    let url = ''
+    let body = {}
+    
+    switch (channel) {
+      case 'telegram':
+        if (!config.telegram_token || !config.telegram_chat_id) return alert('请先填写 Telegram 配置')
+        url = '/api/settings/test-telegram'
+        body = { token: config.telegram_token, chatId: config.telegram_chat_id }
+        break
+      case 'bark':
+        if (!config.bark_url) return alert('请先填写 Bark URL')
+        url = '/api/settings/test-bark'
+        body = { barkUrl: config.bark_url }
+        break
+      case 'webhook':
+        if (!config.webhook_url) return alert('请先填写 Webhook URL')
+        url = '/api/settings/test-webhook'
+        body = { webhookUrl: config.webhook_url }
+        break
+      case 'wechat':
+        if (!config.wechat_key) return alert('请先填写企业微信 Webhook Key')
+        url = '/api/settings/test-wechat'
+        body = { wechatKey: config.wechat_key }
+        break
+      default:
+        alert(`${channel} 测试功能开发中`)
+        return
+    }
+    
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(body)
+    })
+    const data = await res.json()
+    if (data.success) {
+      alert(`${channel.toUpperCase()} 消息发送成功！`)
+    } else {
+      alert(`发送失败：${data.error || '未知错误'}`)
+    }
+  } catch (e) {
+    alert('测试出错：' + e.message)
   }
 }
 
@@ -476,5 +542,78 @@ const logout = () => {
 
 .btn-save-all:hover {
   background: #059669;
+}
+
+/* ========== 响应式适配 - 手机端 ========== */
+@media (max-width: 768px) {
+  .settings-header {
+    padding: 0 15px;
+    height: auto;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  
+  .header-left {
+    gap: 12px;
+  }
+  
+  .header-left h1 {
+    font-size: 18px;
+  }
+  
+  .back-btn {
+    font-size: 14px;
+  }
+  
+  .settings-content {
+    margin: 15px auto;
+    padding: 0 12px;
+    gap: 15px;
+  }
+  
+  .card-title {
+    padding: 12px 15px;
+    font-size: 15px;
+  }
+  
+  .card-body {
+    padding: 15px;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  
+  .channels-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  
+  .links-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .page-actions {
+    text-align: center;
+    padding: 0 12px;
+  }
+  
+  .btn-save-all {
+    width: 100%;
+    padding: 14px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .channels-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .info-box {
+    font-size: 12px;
+    padding: 10px;
+  }
 }
 </style>

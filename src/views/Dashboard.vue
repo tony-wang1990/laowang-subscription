@@ -11,6 +11,13 @@
           <select v-model="themeMode" @change="handleThemeChange">
             <option value="light">☀️ 浅色</option>
             <option value="dark">🌙 深色</option>
+            <option value="ocean">🌊 海洋</option>
+            <option value="forest">🌲 森林</option>
+            <option value="sunset">🌅 落日</option>
+            <option value="sakura">🌸 樱花</option>
+            <option value="lavender">💜 薰衣草</option>
+            <option value="minimal">⬜ 极简</option>
+            <option value="cyber">🌃 赛博</option>
             <option value="system">🖥️ 系统</option>
           </select>
         </div>
@@ -25,8 +32,8 @@
         </div>
         
         <div class="info-group weather-group">
-           <div class="temp">25°C</div>
-           <div class="weather">晴</div>
+           <div class="temp">{{ weather.temp }}</div>
+           <div class="weather">{{ weather.condition }}</div>
         </div>
 
         <a href="https://github.com/tony-wang1990/laowang-subscription" target="_blank" class="github-link">
@@ -35,15 +42,17 @@
         
         <div class="divider"></div>
 
-        <button class="nav-btn" @click="fetchSubscriptions">
-          <span>列表</span>
-        </button>
-        <button class="nav-btn" @click="router.push('/settings')">
-          <span>设置</span>
-        </button>
-        <button class="btn-logout" @click="logout">
-          <span>退出</span>
-        </button>
+        <div class="nav-group">
+          <button class="nav-btn" @click="fetchSubscriptions">
+            <span>列表</span>
+          </button>
+          <button class="nav-btn" @click="router.push('/settings')">
+            <span>设置</span>
+          </button>
+          <button class="btn-logout" @click="logout">
+            <span>退出</span>
+          </button>
+        </div>
       </div>
     </header>
     
@@ -181,25 +190,33 @@ const isModalOpen = ref(false)
 const currentEdit = ref(null)
 const currentTime = ref('')
 const dateParts = ref({ year: '', month: '', day: '', weekday: '' })
+const weather = ref({ temp: '--°C', condition: '加载中' })
 
 // Theme Logic
 const themeMode = ref(localStorage.getItem('themeMode') || 'system')
 
 const applyTheme = () => {
   const root = document.documentElement
-  let isDark = false
-
+  
+  // 系统模式特殊处理
   if (themeMode.value === 'system') {
-    isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-  } else {
-    isDark = themeMode.value === 'dark'
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    if (isDark) {
+      root.setAttribute('data-theme', 'dark')
+    } else {
+      root.removeAttribute('data-theme')
+    }
+    return
   }
-
-  if (isDark) {
-    root.setAttribute('data-theme', 'dark')
-  } else {
+  
+  // 浅色主题移除 data-theme 属性
+  if (themeMode.value === 'light') {
     root.removeAttribute('data-theme')
+    return
   }
+  
+  // 其他主题直接设置
+  root.setAttribute('data-theme', themeMode.value)
 }
 
 const handleThemeChange = () => {
@@ -223,7 +240,9 @@ const categoryOptions = computed(() => {
 onMounted(() => {
   fetchSubscriptions()
   updateTime()
+  fetchWeather()
   setInterval(updateTime, 1000)
+  setInterval(fetchWeather, 600000) // 每10分钟更新天气
   applyTheme() // Init theme
 })
 
@@ -236,6 +255,25 @@ const updateTime = () => {
     month: (now.getMonth() + 1).toString().padStart(2, '0'),
     day: now.getDate().toString().padStart(2, '0'),
     weekday: now.toLocaleDateString('zh-CN', { weekday: 'long', timeZone: 'Asia/Shanghai' })
+  }
+}
+
+// 获取天气信息
+const fetchWeather = async () => {
+  try {
+    // 使用 wttr.in 免费 API，获取北京天气
+    const res = await fetch('https://wttr.in/Beijing?format=%t|%C&lang=zh')
+    const text = await res.text()
+    const parts = text.split('|')
+    if (parts.length >= 2) {
+      weather.value = {
+        temp: parts[0].trim(),
+        condition: parts[1].trim()
+      }
+    }
+  } catch (e) {
+    console.error('Weather fetch error:', e)
+    weather.value = { temp: '--°C', condition: '未知' }
   }
 }
 
@@ -459,6 +497,12 @@ const debounceSearch = () => {
   background: var(--border-color);
 }
 
+.nav-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .nav-btn, .btn-logout { 
   background: none; 
   font-size: 14px; 
@@ -621,4 +665,281 @@ const debounceSearch = () => {
 .btn-act.delete { background: #ef4444; }
 .btn-act.stop { background: #f59e0b; }
 .btn-act.stop.paused { background: #10b981; }
+
+/* ========== 响应式适配 - 平板端 ========== */
+@media (max-width: 1024px) {
+  .dashboard-header {
+    padding: 0 20px;
+  }
+  
+  .header-right {
+    gap: 15px;
+  }
+  
+  .info-group.time-group {
+    border-right: none;
+    padding-right: 0;
+  }
+  
+  .date-row {
+    font-size: 14px;
+  }
+  
+  .temp {
+    font-size: 14px;
+  }
+  
+  .table-header, .table-row {
+    grid-template-columns: 2fr 1.5fr 2fr 1fr 1.5fr;
+  }
+  
+  .th.remind, .td.remind {
+    display: none;
+  }
+}
+
+/* ========== 响应式适配 - 手机端 ========== */
+@media (max-width: 768px) {
+  .dashboard-header {
+    padding: 12px 15px;
+    height: auto;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .header-left {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .logo {
+    font-size: 24px;
+  }
+  
+  .rainbow-text {
+    font-size: 18px;
+  }
+  
+  .header-right {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  /* 移动端日期天气样式 - 合并为一行显示 */
+  .info-group.time-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    border-right: none;
+    padding-right: 0;
+    background: var(--bg-hover);
+    padding: 0 12px;
+    border-radius: 20px;
+    height: 32px;
+  }
+  
+  .date-row {
+    font-size: 13px;
+  }
+  
+  .weekday {
+    display: none;
+  }
+  
+  .info-group.weather-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-hover);
+    padding: 0 12px;
+    border-radius: 20px;
+    margin-right: 0;
+    height: 32px;
+  }
+  
+  .temp {
+    font-size: 13px;
+  }
+  
+  .weather {
+    font-size: 12px;
+  }
+  
+  .theme-switcher select {
+    padding: 0 12px;
+    font-size: 12px;
+    height: 32px;
+    border-radius: 20px;
+    background: var(--bg-hover);
+    border: none;
+  }
+  
+  .github-link {
+    display: none;
+  }
+  
+  .divider {
+    display: none;
+  }
+  
+  .nav-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--bg-hover);
+    padding: 0 8px;
+    border-radius: 20px;
+    height: 32px;
+  }
+  
+  .nav-btn, .btn-logout {
+    font-size: 12px;
+    padding: 4px 10px;
+    background: transparent;
+    border-radius: 16px;
+  }
+  
+  .nav-btn:hover, .btn-logout:hover {
+    background: rgba(128,128,128,0.15);
+  }
+  
+  /* 内容区域 */
+  .dashboard-content {
+    padding: 15px;
+  }
+  
+  .content-header h2 {
+    font-size: 20px;
+  }
+  
+  .content-header p {
+    font-size: 12px;
+  }
+  
+  /* 工具栏 */
+  .toolbar {
+    flex-direction: column;
+    padding: 12px;
+    gap: 10px;
+  }
+  
+  .search-wrapper {
+    width: 100%;
+  }
+  
+  .filter-wrapper {
+    width: 100%;
+  }
+  
+  .filter-wrapper select {
+    width: 100%;
+  }
+  
+  .toggle-wrapper {
+    width: 100%;
+    margin-right: 0;
+  }
+  
+  .btn-add {
+    width: 100%;
+    text-align: center;
+  }
+  
+  /* 表格改卡片布局 */
+  .table-header {
+    display: none;
+  }
+  
+  .table-row {
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    gap: 12px;
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+  }
+  
+  .td {
+    width: 100%;
+  }
+  
+  .td.name {
+    border-bottom: 1px dashed var(--border-color);
+    padding-bottom: 10px;
+  }
+  
+  .td.name .main-text {
+    font-size: 18px;
+  }
+  
+  .td.type {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  
+  .td.type .category-badge {
+    margin-bottom: 0;
+  }
+  
+  .td.type .cycle-info,
+  .td.type .tag-info {
+    margin-bottom: 0;
+  }
+  
+  .td.date {
+    background: var(--bg-hover);
+    padding: 10px;
+    border-radius: 8px;
+  }
+  
+  .td.remind {
+    display: none;
+  }
+  
+  .td.status {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: auto;
+  }
+  
+  .td.actions {
+    border-top: 1px dashed var(--border-color);
+    padding-top: 12px;
+  }
+  
+  .action-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  
+  .btn-act {
+    padding: 8px 4px;
+    font-size: 11px;
+  }
+}
+
+/* ========== 响应式适配 - 小屏手机 ========== */
+@media (max-width: 480px) {
+  .rainbow-text {
+    font-size: 16px;
+  }
+  
+  .header-right {
+    gap: 6px;
+  }
+  
+  .nav-btn, .btn-logout {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+  
+  .action-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 </style>

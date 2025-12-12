@@ -118,11 +118,15 @@ router.delete('/:id', (req, res) => {
 // Reusing PUT logic for now as frontend sends full object with new status
 
 // Test Notification
-router.post('/:id/test', (req, res) => {
-    // Logic to send notification immediately
-    // For MVP, just return success
-    console.log(`Sending test notification for subscription ${req.params.id}`);
-    res.json({ success: true, message: 'Test notification sent' });
+router.post('/:id/test', async (req, res) => {
+    const { sendTestNotification } = require('../cron/checker');
+    try {
+        const result = await sendTestNotification(req.params.id);
+        res.json(result);
+    } catch (error) {
+        console.error('Test notification error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
 });
 
 module.exports = router;
