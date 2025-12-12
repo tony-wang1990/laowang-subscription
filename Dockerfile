@@ -33,6 +33,9 @@ RUN apt-get update && apt-get install -y python3 make g++ \
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server ./server
 
+# Install dumb-init
+RUN apt-get update && apt-get install -y dumb-init
+
 # Verify sqlite3 installation
 RUN node -e "require('sqlite3')"
 
@@ -44,5 +47,6 @@ ENV PORT=8080
 
 EXPOSE 8080
 
-# Use direct node command instead of npm start for better signal handling and logging
+# Use dumb-init as entrypoint
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 CMD ["node", "server/index.js"]
