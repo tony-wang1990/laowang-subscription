@@ -27,7 +27,7 @@
 ## 📸 界面预览
 ### 🌐 在线演示
 
-[![Demo Site](https://img.shields.io/badge/🔗_点击体验_Demo-demo-sub.zeabur.app-00d4aa?style=for-the-badge&logo=zeabur)](https://demo-sub.zeabur.app/ )
+DEMO站点 https://demo-sub.zeabur.app/ 
                           
 ### 仪表盘
 | 浅色模式 | 深色模式 |
