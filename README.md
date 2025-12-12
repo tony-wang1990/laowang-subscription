@@ -115,6 +115,7 @@ docker run -d \
   -p 8080:8080 \
   -v $(pwd)/database:/app/database \
   -e JWT_SECRET=your_secret_key \
+  -e TZ=Asia/Shanghai \
   ghcr.io/tony-wang1990/laowang-subscription:latest
 ```
 
