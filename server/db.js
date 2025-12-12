@@ -4,9 +4,16 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 
 // 确保 database 目录存在
-// 确保 database 目录存在且可写
-let dbDir = path.resolve(__dirname, '../database');
+// 数据库目录策略：
+// 1. 优先使用环境变量 DATA_DIR
+// 2. 其次尝试 /app/database (如果存在且可写)
+// 3. 最后降级到 /tmp (Serverless/只读环境)
+
+let dbDir = process.env.DATA_DIR || path.resolve(__dirname, '../database');
+let useTmp = false;
+
 try {
+    // 如果目录不存在，尝试创建（在只读系统上这会失败，转入 catch）
     if (!fs.existsSync(dbDir)) {
         fs.mkdirSync(dbDir, { recursive: true });
     }
@@ -15,12 +22,16 @@ try {
     fs.writeFileSync(testFile, 'test');
     fs.unlinkSync(testFile);
 } catch (e) {
-    console.warn(`Database directory ${dbDir} is not writable or cannot be created. Falling back to /tmp.`);
-    dbDir = '/tmp';
+    console.warn(`Primary DB dir ${dbDir} is not writable. Using /tmp.`);
+    useTmp = true;
+    dbDir = '/tmp'; // 降级
 }
 
 const dbPath = path.resolve(dbDir, 'subscription.db');
+// 确保 schema.sql 总能找到
 const schemaPath = path.resolve(__dirname, 'schema.sql');
+
+console.log(`Using database at: ${dbPath}`);
 
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
