@@ -4,10 +4,19 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 
 // 确保 database 目录存在
-const dbDir = path.resolve(__dirname, '../database');
-if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
-    console.log('Database directory created:', dbDir);
+// 确保 database 目录存在且可写
+let dbDir = path.resolve(__dirname, '../database');
+try {
+    if (!fs.existsSync(dbDir)) {
+        fs.mkdirSync(dbDir, { recursive: true });
+    }
+    // 测试写入权限
+    const testFile = path.join(dbDir, '.write-test');
+    fs.writeFileSync(testFile, 'test');
+    fs.unlinkSync(testFile);
+} catch (e) {
+    console.warn(`Database directory ${dbDir} is not writable or cannot be created. Falling back to /tmp.`);
+    dbDir = '/tmp';
 }
 
 const dbPath = path.resolve(dbDir, 'subscription.db');
