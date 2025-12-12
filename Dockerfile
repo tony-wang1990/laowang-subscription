@@ -33,9 +33,16 @@ RUN apt-get update && apt-get install -y python3 make g++ \
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server ./server
 
+# Verify sqlite3 installation
+RUN node -e "require('sqlite3')"
+
+# Pre-create database directory with open permissions
+RUN mkdir -p /app/database && chmod 777 /app/database
+
 ENV NODE_ENV=production
 ENV PORT=8080
 
 EXPOSE 8080
 
-CMD ["npm", "start"]
+# Use direct node command instead of npm start for better signal handling and logging
+CMD ["node", "server/index.js"]
