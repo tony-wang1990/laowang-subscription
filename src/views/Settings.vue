@@ -73,16 +73,9 @@
             <label>通知方式 (可多选)</label>
             <div class="channels-grid">
               <label class="channel-item"><input type="checkbox" v-model="config.enable_telegram"> Telegram</label>
-              <label class="channel-item"><input type="checkbox" v-model="config.enable_notifyx"> NotifyX</label>
+              <label class="channel-item"><input type="checkbox" v-model="config.enable_bark"> Bark (iOS)</label>
               <label class="channel-item"><input type="checkbox" v-model="config.enable_webhook"> Webhook 通知</label>
               <label class="channel-item"><input type="checkbox" v-model="config.enable_wechat"> 企业微信机器人</label>
-              <label class="channel-item"><input type="checkbox" v-model="config.enable_email"> 邮件通知</label>
-              <label class="channel-item"><input type="checkbox" v-model="config.enable_bark"> Bark</label>
-            </div>
-            <div class="links-row">
-               <a href="#" target="_blank">↗ NotifyX官网</a>
-               <a href="#" target="_blank">↗ Webhook 调试工具</a>
-               <a href="#" target="_blank">↗ Bark iOS应用</a>
             </div>
           </div>
           
