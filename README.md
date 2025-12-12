@@ -42,10 +42,10 @@
 | :---: | :---: |
 | ![浅色](docs/images/dashboard_light.png) | ![深色](docs/images/dashboard_dark.png) |
 
-### 设置页面
-| 通用设置 | 通知配置 |
+### 响应式设计
+| 设置页面 | 📱 移动端适配 |
 | :---: | :---: |
-| ![设置浅色](docs/images/settings_light.png) | ![设置深色](docs/images/settings_dark.png) |
+| ![设置](docs/images/settings_light.png) | 完美支持手机和平板访问，Header 采用胶囊布局，表格自动转换为卡片样式 |
 
 ---
 
@@ -106,7 +106,30 @@ docker-compose up -d
 
 ---
 
-### 方式三：手动部署 (Node.js)
+### 方式三：Docker 镜像拉取（最简单 ⭐）
+
+直接拉取预构建镜像，无需克隆仓库。
+
+```bash
+# 拉取最新镜像
+docker pull ghcr.io/tony-wang1990/laowang-subscription:latest
+
+# 运行容器
+docker run -d \
+  --name laowang-subscription \
+  -p 8080:8080 \
+  -v $(pwd)/database:/app/database \
+  -e JWT_SECRET=your_secret_key \
+  ghcr.io/tony-wang1990/laowang-subscription:latest
+```
+
+启动后访问 `http://your-ip:8080`。
+
+> 💡 镜像支持 `amd64` 和 `arm64` 架构，每次推送到 main 分支会自动构建。
+
+---
+
+### 方式四：手动部署 (Node.js)
 
 适用于 Linux VPS（需安装 Node.js 20+）。
 
