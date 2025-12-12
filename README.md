@@ -1,14 +1,14 @@
-# 老王订阅转换前端 (LaoWang Subscription)
+# 老王订阅管理系统 (LaoWang Subscription)
 
-这是一个基于 Vue 3 + Express 的订阅转换前端项目，专为 [SubConverter](https://github.com/tindy2013/subconverter) 设计。它提供了现代化的用户界面，支持深色模式、多语言（中/英），并集成了丰富的配置选项。
+这是一个基于 Vue 3 + Express 的一站式订阅管理系统，集成了 [SubConverter](https://github.com/tindy2013/subconverter) 订阅转换功能。它不仅仅是一个前端，更是一个完整的订阅管理解决方案。
 
 <p align="center">
   <a href="https://test.199060.xyz/" target="_blank">
-    <img src="https://img.shields.io/badge/🔗_点击体验_DEMO-TEST.199060.XYZ-38b2ac?style=for-the-badge" alt="Demo">
+    <img src="https://img.shields.io/badge/🔗_在线演示-test.199060.xyz-blue?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Demo">
   </a>
 </p>
 
-![老王订阅转换](https://raw.githubusercontent.com/tony-wang1990/laowang-subscription/main/screenshot.png)
+![老王订阅管理系统](https://raw.githubusercontent.com/tony-wang1990/laowang-subscription/main/screenshot.png)
 
 ## ✨ 特性
 
