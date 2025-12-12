@@ -1,35 +1,31 @@
 # Build Stage
-FROM node:20-slim AS builder
+FROM node:20 AS builder
 
 WORKDIR /app
 
-# Install build dependencies for native modules
-RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
-
+# Full node image has python/make/g++ pre-installed usually, but let's be safe
 COPY package*.json ./
-# Install ALL dependencies (including dev)
 RUN npm ci
 
 COPY . .
-# Build frontend
 RUN npm run build
 
-# Remove devDependencies to prepare for production copy
-RUN npm prune --production
-
 # Production Stage
-FROM node:20-slim
+# Use FULL node image to ensure all shared libraries (glibc, libstdc++, etc.) are present
+FROM node:20
 
 WORKDIR /app
 
-# Install runtime dependencies (python3 might be needed for sqlite3 runtime binding)
-RUN apt-get update && apt-get install -y python3 && rm -rf /var/lib/apt/lists/*
+# Install dumb-init for signal handling
+RUN apt-get update && apt-get install -y dumb-init && rm -rf /var/lib/apt/lists/*
 
-# Copy package.json for reference
 COPY package*.json ./
 
-# COPY pre-built node_modules from builder (Critical Step!)
-COPY --from=builder /app/node_modules ./node_modules
+# Install production dependencies directly in the container
+# This ensures native modules (sqlite3) must work on this specific architecture/OS
+RUN npm install --production
+
+# Copy built artifacts
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server ./server
 
@@ -40,5 +36,6 @@ ENV NODE_ENV=production
 ENV PORT=8080
 EXPOSE 8080
 
-# Simple, direct start command
+# Use dumb-init
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 CMD ["node", "server/index.js"]
