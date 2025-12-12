@@ -81,6 +81,37 @@ services:
 docker-compose up -d
 ```
 
+### 🔄 如何更新
+
+当项目均有更新（发布新镜像）时，在 VPS 上执行以下命令即可无损升级：
+
+#### Docker Compose (推荐)
+
+```bash
+# 1. 拉取最新镜像
+docker-compose pull
+
+# 2.重新创建容器 (不会删除数据)
+docker-compose up -d --force-recreate
+
+# 3. 清理旧镜像 (可选)
+docker image prune -f
+```
+
+#### Docker Run
+
+```bash
+# 1. 停止并删除容器
+docker stop laowang-subscription
+docker rm laowang-subscription
+
+# 2. 拉取最新镜像
+docker pull ghcr.io/tony-wang1990/laowang-subscription:main
+
+# 3. 重新运行命令 (把之前的 docker run 命令再跑一遍)
+docker run -d ...
+```
+
 ### 方式三：手动构建
 
 如果您想自己构建镜像：
