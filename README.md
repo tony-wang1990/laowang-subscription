@@ -42,9 +42,6 @@
 | :---: | :---: |
 | ![浅色](docs/images/dashboard_light.png) | ![深色](docs/images/dashboard_dark.png) |
 
-### 设置页面
-![设置](docs/images/settings_light.png)
-
 ---
 
 ## 📋 更新日志
