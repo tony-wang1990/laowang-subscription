@@ -119,6 +119,9 @@
                  周期: {{ sub.cycle_value }}{{ getUnitText(sub.cycle_unit) }}
                  <span class="refresh-icon">🔄</span>
               </div>
+              <div class="price-info" v-if="sub.price || sub.currency === 'FREE'">
+                 💰 {{ formatPrice(sub) }}
+              </div>
            </div>
            
            <!-- 到期时间 -->
@@ -391,6 +394,15 @@ const getCategoryIcon = (cat) => {
 const getUnitText = (unit) => {
   const map = { day: '天', month: '月', year: '年' }
   return map[unit] || unit
+}
+
+const formatPrice = (sub) => {
+  if (sub.currency === 'FREE' || !sub.price) return '免费'
+  const currencySymbols = {
+    CNY: '¥', USD: '$', HKD: 'HK$', EUR: '€', JPY: '¥', GBP: '£'
+  }
+  const symbol = currencySymbols[sub.currency] || sub.currency
+  return `${symbol}${sub.price}`
 }
 
 const formatDate = (dateStr) => {
@@ -724,6 +736,7 @@ const debounceSearch = () => {
 }
 .cycle-info, .tag-info { font-size: 12px; color: var(--text-sub); margin-bottom: 2px; }
 .cycle-info .refresh-icon { color: #60a5fa; font-size: 10px; margin-left: 4px; }
+.price-info { font-size: 12px; color: #10b981; font-weight: 600; margin-top: 4px; }
 
 .td.date { font-size: 14px; }
 .main-date { font-weight: 600; color: var(--text-main); }

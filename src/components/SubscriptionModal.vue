@@ -51,8 +51,9 @@
           <div class="form-group">
              <label>价格</label>
              <div class="input-group">
-               <input v-model="form.price" type="text" placeholder="0.00">
+               <input v-model="form.price" type="text" placeholder="0.00" :disabled="form.currency === 'FREE'">
                <select v-model="form.currency" style="width: 100px">
+                 <option value="FREE">免费</option>
                  <option value="CNY">CNY</option>
                  <option value="USD">USD</option>
                  <option value="HKD">HKD</option>
