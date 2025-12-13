@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" class="modal-overlay" @click.self="close">
+  <div v-if="isOpen" class="modal-overlay">
     <div class="modal-content">
       <div class="modal-header">
         <h2>{{ isEdit ? '编辑订阅' : '添加新订阅' }}</h2>

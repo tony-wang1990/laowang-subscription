@@ -11,13 +11,13 @@
           <select v-model="themeMode" @change="handleThemeChange">
             <option value="light">☀️ 浅色</option>
             <option value="dark">🌙 深色</option>
+            <option value="space">🚀 太空</option>
+            <option value="neon">💫 霓虹</option>
+            <option value="candy">� 糖果</option>
+            <option value="sakura">🌸 少女</option>
             <option value="ocean">🌊 海洋</option>
-            <option value="forest">🌲 森林</option>
-            <option value="sunset">🌅 落日</option>
-            <option value="sakura">🌸 樱花</option>
-            <option value="lavender">💜 薰衣草</option>
-            <option value="minimal">⬜ 极简</option>
-            <option value="cyber">🌃 赛博</option>
+            <option value="cyber">🤖 科幻</option>
+            <option value="cartoon">� 卡通</option>
             <option value="system">🖥️ 系统</option>
           </select>
         </div>
@@ -46,9 +46,6 @@
         <div class="divider"></div>
 
         <div class="nav-group">
-          <button class="nav-btn" @click="fetchSubscriptions">
-            <span>列表</span>
-          </button>
           <button class="nav-btn" @click="router.push('/settings')">
             <span>设置</span>
           </button>
@@ -87,10 +84,24 @@
         <div class="toggle-wrapper">
           <label><input type="checkbox" v-model="showLunar"> 显示农历</label>
         </div>
+        <div class="view-switch">
+          <button 
+            class="switch-btn" 
+            :class="{ active: viewMode === 'table' }" 
+            @click="viewMode = 'table'; saveViewMode()"
+            title="列表视图"
+          >≡</button>
+          <button 
+            class="switch-btn" 
+            :class="{ active: viewMode === 'card' }" 
+            @click="viewMode = 'card'; saveViewMode()"
+            title="卡片视图"
+          >⊞</button>
+        </div>
         <button class="btn-add" @click="openAddModal">添加新订阅</button>
       </div>
       
-      <div class="subscription-table">
+      <div v-show="viewMode === 'table'" class="subscription-table">
         <div class="table-header">
            <div class="th name">名称</div>
            <div class="th type">类型</div>
@@ -119,8 +130,8 @@
                  周期: {{ sub.cycle_value }}{{ getUnitText(sub.cycle_unit) }}
                  <span class="refresh-icon">🔄</span>
               </div>
-              <div class="price-info" v-if="sub.price || sub.currency === 'FREE'">
-                 💰 {{ formatPrice(sub) }}
+              <div class="price-info">
+                 🏷️ {{ formatPrice(sub) }}
               </div>
            </div>
            
@@ -169,6 +180,77 @@
            </div>
         </div>
       </div>
+
+      <!-- 卡片视图 -->
+      <div v-show="viewMode === 'card'" class="subscription-cards">
+        <div v-if="loading" class="loading-state">加载中...</div>
+        <div v-else class="cards-grid">
+          <div 
+            v-for="sub in subscriptions" 
+            :key="'card-' + sub.id" 
+            class="sub-card"
+            :class="{ 'card-warning': sub.daysLeft <= 7 && sub.daysLeft > 0, 'card-expired': sub.daysLeft <= 0 }"
+          >
+            <!-- 卡片头部 -->
+            <div class="card-header">
+              <div class="card-title">
+                <span class="card-icon">{{ getCategoryIcon(sub.category) }}</span>
+                <span class="card-name">{{ sub.name }}</span>
+              </div>
+              <span class="status-pill mini" :class="sub.status === 'active' ? 'active' : 'inactive'">
+                {{ sub.status === 'active' ? '正常' : '停用' }}
+              </span>
+            </div>
+            
+            <!-- 卡片内容 -->
+            <div class="card-body">
+              <div class="card-row">
+                <span class="card-label">类型</span>
+                <span class="card-value">{{ sub.category }}</span>
+              </div>
+              <div class="card-row">
+                <span class="card-label">周期</span>
+                <span class="card-value">{{ sub.cycle_value }}{{ getUnitText(sub.cycle_unit) }} 🔄</span>
+              </div>
+              <div class="card-row">
+                <span class="card-label">续费价格</span>
+                <span class="card-value price">{{ formatPrice(sub) }}</span>
+              </div>
+              <div class="card-row highlight">
+                <span class="card-label">剩余</span>
+                <span class="card-value days" :class="getDaysLeftClass(sub.daysLeft)">
+                  {{ sub.daysLeft }}天
+                </span>
+              </div>
+              <div class="card-row" v-if="showLunar">
+                <span class="card-label">农历</span>
+                <span class="card-value lunar">{{ getLunarDate(sub.expire_date) }}</span>
+              </div>
+              <div class="card-row">
+                <span class="card-label">提醒</span>
+                <span class="card-value">提前{{ sub.remind_days }}天 🔔</span>
+              </div>
+              <div class="card-notes" v-if="sub.notes">
+                <span class="notes-label">📝</span> {{ sub.notes }}
+              </div>
+            </div>
+            
+            <!-- 卡片操作 -->
+            <div class="card-actions">
+              <button class="btn-act edit" @click="openEditModal(sub)">编辑</button>
+              <button class="btn-act test" @click="testNotify(sub)">测试</button>
+              <button class="btn-act delete" @click="deleteSubscription(sub.id)">删除</button>
+              <button 
+                class="btn-act stop" 
+                :class="{ 'paused': sub.status !== 'active' }"
+                @click="toggleStatus(sub)"
+              >
+                {{ sub.status === 'active' ? '停用' : '启用' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
     
     <SubscriptionModal 
@@ -198,6 +280,10 @@ const currentEdit = ref(null)
 const currentTime = ref('')
 const dateParts = ref({ year: '', month: '', day: '', weekday: '' })
 const weather = ref({ temp: '--', condition: '请稍候', location: '检查网络...' })
+
+// View Mode Logic
+const viewMode = ref(localStorage.getItem('viewMode') || 'table')
+const saveViewMode = () => localStorage.setItem('viewMode', viewMode.value)
 
 // Theme Logic
 const themeMode = ref(localStorage.getItem('themeMode') || 'system')
@@ -398,11 +484,8 @@ const getUnitText = (unit) => {
 
 const formatPrice = (sub) => {
   if (sub.currency === 'FREE' || !sub.price) return '免费'
-  const currencySymbols = {
-    CNY: '¥', USD: '$', HKD: 'HK$', EUR: '€', JPY: '¥', GBP: '£'
-  }
-  const symbol = currencySymbols[sub.currency] || sub.currency
-  return `${symbol}${sub.price}`
+  // 格式: 10 USD
+  return `${sub.price} ${sub.currency || 'CNY'}`
 }
 
 const formatDate = (dateStr) => {
@@ -446,16 +529,32 @@ const saveSubscription = async (formData) => {
 }
 
 const deleteSubscription = async (id) => {
-  if (!confirm('确认删除？')) return
-  const token = localStorage.getItem('token')
-  await fetch(`/api/subscriptions/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
-  fetchSubscriptions()
+  console.log('删除按钮被点击, ID:', id)
+  
+  try {
+    const token = localStorage.getItem('token')
+    const res = await fetch(`/api/subscriptions/${id}`, { 
+      method: 'DELETE', 
+      headers: { 'Authorization': `Bearer ${token}` } 
+    })
+    console.log('删除请求完成, 状态:', res.status)
+    if (res.ok) {
+      // 直接从本地数据中移除
+      subscriptions.value = subscriptions.value.filter(s => s.id !== id)
+      console.log('删除成功')
+    } else {
+      alert('删除失败，请重试')
+    }
+  } catch (e) {
+    console.error('删除失败:', e)
+    alert('删除失败: ' + e.message)
+  }
 }
 
 // New Actions
 const testNotify = async (sub) => {
   const token = localStorage.getItem('token')
-  if (!confirm(`确认要发送测试通知给 "${sub.name}" 吗？`)) return
+  if (!window.confirm(`确认要发送测试通知给 "${sub.name}" 吗？`)) return
 
   try {
     const res = await fetch(`/api/subscriptions/${sub.id}/test`, {
@@ -478,12 +577,22 @@ const toggleStatus = async (sub) => {
   const token = localStorage.getItem('token')
   const payload = { ...sub, status: newStatus }
   
-  await fetch(`/api/subscriptions/${sub.id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-    body: JSON.stringify(payload)
-  })
-  fetchSubscriptions()
+  try {
+    const res = await fetch(`/api/subscriptions/${sub.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(payload)
+    })
+    if (res.ok) {
+      // 直接更新本地数据状态，不重新加载整个列表
+      const index = subscriptions.value.findIndex(s => s.id === sub.id)
+      if (index !== -1) {
+        subscriptions.value[index].status = newStatus
+      }
+    }
+  } catch (e) {
+    alert('操作失败: ' + e.message)
+  }
 }
 
 const logout = () => {
@@ -517,6 +626,9 @@ const debounceSearch = () => {
   border-bottom: 1px solid var(--border-color);
   color: var(--text-main);
   transition: background-color 0.3s, border-color 0.3s;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .header-left {
@@ -651,9 +763,12 @@ const debounceSearch = () => {
   display: flex;
   align-items: center;
   gap: 15px;
-  margin-bottom: 25px;
+  margin-bottom: 0;
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 70px;
+  z-index: 90;
 }
 
 .search-wrapper { flex: 1; }
@@ -694,6 +809,7 @@ const debounceSearch = () => {
 .subscription-table {
   background: var(--bg-card);
   border-radius: 8px;
+  margin-top: 20px;
   border: 1px solid var(--border-color);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
@@ -791,6 +907,196 @@ const debounceSearch = () => {
 .btn-act.stop { background: #f59e0b; }
 .btn-act.stop.paused { background: #10b981; }
 
+/* View Switch Buttons */
+.view-switch {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-input);
+  border-radius: 6px;
+  padding: 3px;
+  border: 1px solid var(--border-color);
+}
+
+.switch-btn {
+  background: transparent;
+  border: none;
+  padding: 6px 10px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+  opacity: 0.5;
+}
+
+.switch-btn:hover {
+  opacity: 0.8;
+}
+
+.switch-btn.active {
+  background: var(--bg-card);
+  opacity: 1;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Card View Styles */
+.subscription-cards {
+  background: var(--bg-card);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  margin-top: 20px;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.sub-card {
+  background: var(--bg-page);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  min-height: 280px;
+}
+
+.sub-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  border-color: #6366f1;
+}
+
+.sub-card.card-warning {
+  border-left: 4px solid #fbbf24;
+}
+
+.sub-card.card-expired {
+  border-left: 4px solid #ef4444;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05));
+  border-bottom: 1px solid var(--border-color);
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-icon {
+  font-size: 24px;
+}
+
+.card-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.status-pill.mini {
+  padding: 3px 10px;
+  font-size: 11px;
+}
+
+.card-body {
+  padding: 16px;
+  flex-grow: 1;
+}
+
+.card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--border-color);
+}
+
+.card-row:last-of-type {
+  border-bottom: none;
+}
+
+.card-row.highlight {
+  background: transparent;
+  margin: 0;
+  padding: 8px 0;
+  border-radius: 0;
+  border-bottom: 1px dashed var(--border-color);
+}
+
+.card-label {
+  font-size: 13px;
+  color: var(--text-sub);
+  font-weight: 500;
+  text-align: left;
+  width: 70px;
+  flex-shrink: 0;
+}
+
+.card-value {
+  font-size: 14px;
+  color: var(--text-main);
+  font-weight: 600;
+  text-align: right;
+  flex: 1;
+}
+
+.card-value.price {
+  color: #10b981;
+}
+
+.card-value.days {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.card-value.lunar {
+  color: #818cf8;
+}
+
+.card-notes {
+  margin-top: 12px;
+  padding: 10px;
+  background: var(--bg-hover);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-sub);
+}
+
+.notes-label {
+  margin-right: 4px;
+}
+
+.card-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 12px 16px;
+  background: var(--bg-table-header);
+  border-top: 1px solid var(--border-color);
+  position: relative;
+  z-index: 10;
+}
+
+.card-actions .btn-act {
+  padding: 8px 4px;
+  font-size: 11px;
+  position: relative;
+  z-index: 11;
+  pointer-events: auto;
+}
+
 /* ========== 响应式适配 - 平板端 ========== */
 @media (max-width: 1024px) {
   .dashboard-header {
@@ -820,6 +1126,24 @@ const debounceSearch = () => {
   
   .th.remind, .td.remind {
     display: none;
+  }
+  
+  /* 平板端卡片视图适配 */
+  .cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .sub-card {
+    min-height: 260px;
+  }
+  
+  .card-name {
+    font-size: 15px;
+  }
+  
+  .card-label, .card-value {
+    font-size: 12px;
   }
 }
 
@@ -985,6 +1309,25 @@ const debounceSearch = () => {
     text-align: center;
   }
   
+  .view-switch {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  /* 卡片视图移动端适配 */
+  .subscription-cards {
+    padding: 12px;
+  }
+  
+  .cards-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .card-actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
   /* 表格改卡片布局 */
   .table-header {
     display: none;
@@ -1078,6 +1421,57 @@ const debounceSearch = () => {
   
   .action-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  
+  /* 小屏手机卡片视图适配 */
+  .sub-card {
+    min-height: 240px;
+  }
+  
+  .card-header {
+    padding: 12px;
+  }
+  
+  .card-icon {
+    font-size: 20px;
+  }
+  
+  .card-name {
+    font-size: 14px;
+  }
+  
+  .card-body {
+    padding: 12px;
+  }
+  
+  .card-row {
+    padding: 6px 0;
+  }
+  
+  .card-row.highlight {
+    padding: 8px 10px;
+    min-height: 38px;
+  }
+  
+  .card-label {
+    font-size: 11px;
+  }
+  
+  .card-value {
+    font-size: 12px;
+  }
+  
+  .card-value.days {
+    font-size: 16px;
+  }
+  
+  .card-actions {
+    padding: 10px 12px;
+  }
+  
+  .card-actions .btn-act {
+    padding: 6px 2px;
+    font-size: 10px;
   }
 }
 </style>

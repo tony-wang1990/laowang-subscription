@@ -67,112 +67,112 @@
     --gradient-primary: linear-gradient(135deg, #0369a1 0%, #0ea5e9 100%);
 }
 
-/* 🌲 森林绿主题 */
-[data-theme="forest"] {
-    --bg-page: #0d1f12;
-    --bg-header: #132d19;
-    --bg-card: #1a3d22;
-    --bg-input: #0d1f12;
-    --bg-hover: #245530;
-    --bg-table-header: #1a3d22;
-    --text-main: #dcfce7;
-    --text-sub: #86efac;
+/* 🚀 太空紫主题 - 深邃星空 */
+[data-theme="space"] {
+    --bg-page: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    --bg-header: rgba(15, 12, 41, 0.9);
+    --bg-card: rgba(48, 43, 99, 0.7);
+    --bg-input: #0f0c29;
+    --bg-hover: rgba(100, 80, 180, 0.3);
+    --bg-table-header: rgba(48, 43, 99, 0.8);
+    --text-main: #e8e0ff;
+    --text-sub: #b8a8ff;
     --text-inverse: #ffffff;
-    --border-color: #1e5128;
-    --shadow-sm: none;
-    --shadow-md: none;
-    --color-primary: #22c55e;
-    --gradient-primary: linear-gradient(135deg, #15803d 0%, #22c55e 100%);
+    --border-color: rgba(138, 108, 255, 0.3);
+    --shadow-sm: 0 0 10px rgba(138, 108, 255, 0.2);
+    --shadow-md: 0 0 20px rgba(138, 108, 255, 0.3);
+    --color-primary: #8a6cff;
+    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-/* 🌅 落日橙主题 */
-[data-theme="sunset"] {
-    --bg-page: #1c1410;
-    --bg-header: #2d1f18;
-    --bg-card: #3d2a20;
-    --bg-input: #1c1410;
-    --bg-hover: #4d3828;
-    --bg-table-header: #3d2a20;
-    --text-main: #ffedd5;
-    --text-sub: #fdba74;
+/* 💫 霓虹炫彩主题 */
+[data-theme="neon"] {
+    --bg-page: #0a0a12;
+    --bg-header: #12121f;
+    --bg-card: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
+    --bg-input: #0a0a12;
+    --bg-hover: rgba(255, 107, 107, 0.15);
+    --bg-table-header: #1a1a2e;
+    --text-main: #ff6b6b;
+    --text-sub: #feca57;
     --text-inverse: #ffffff;
-    --border-color: #5c4333;
-    --shadow-sm: none;
-    --shadow-md: none;
-    --color-primary: #f97316;
-    --gradient-primary: linear-gradient(135deg, #ea580c 0%, #fb923c 100%);
+    --border-color: rgba(255, 107, 107, 0.3);
+    --shadow-sm: 0 0 8px rgba(255, 107, 107, 0.4);
+    --shadow-md: 0 0 15px rgba(254, 202, 87, 0.4);
+    --color-primary: #ff6b6b;
+    --gradient-primary: linear-gradient(135deg, #ff6b6b 0%, #feca57 50%, #48dbfb 100%);
 }
 
-/* 🌸 樱花粉主题 */
+/* 🍬 糖果彩虹主题 */
+[data-theme="candy"] {
+    --bg-page: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    --bg-header: rgba(255, 255, 255, 0.85);
+    --bg-card: rgba(255, 255, 255, 0.9);
+    --bg-input: #fff5f5;
+    --bg-hover: rgba(255, 182, 159, 0.3);
+    --bg-table-header: rgba(255, 236, 210, 0.9);
+    --text-main: #e74c3c;
+    --text-sub: #f39c12;
+    --text-inverse: #ffffff;
+    --border-color: rgba(231, 76, 60, 0.2);
+    --shadow-sm: 0 2px 8px rgba(231, 76, 60, 0.1);
+    --shadow-md: 0 4px 16px rgba(231, 76, 60, 0.15);
+    --color-primary: #e74c3c;
+    --gradient-primary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+/* 🌸 少女粉主题 */
 [data-theme="sakura"] {
-    --bg-page: #fdf2f8;
-    --bg-header: #fce7f3;
-    --bg-card: #fbcfe8;
-    --bg-input: #fdf2f8;
-    --bg-hover: #f9a8d4;
-    --bg-table-header: #fbcfe8;
-    --text-main: #831843;
-    --text-sub: #be185d;
+    --bg-page: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+    --bg-header: rgba(255, 255, 255, 0.9);
+    --bg-card: rgba(255, 255, 255, 0.95);
+    --bg-input: #fff0f5;
+    --bg-hover: rgba(244, 114, 182, 0.15);
+    --bg-table-header: rgba(252, 231, 243, 0.9);
+    --text-main: #be185d;
+    --text-sub: #ec4899;
     --text-inverse: #ffffff;
-    --border-color: #f472b6;
-    --shadow-sm: 0 1px 2px 0 rgba(219, 39, 119, 0.1);
-    --shadow-md: 0 4px 6px -1px rgba(219, 39, 119, 0.1);
+    --border-color: rgba(244, 114, 182, 0.3);
+    --shadow-sm: 0 2px 8px rgba(236, 72, 153, 0.1);
+    --shadow-md: 0 4px 16px rgba(236, 72, 153, 0.15);
     --color-primary: #ec4899;
-    --gradient-primary: linear-gradient(135deg, #db2777 0%, #f472b6 100%);
+    --gradient-primary: linear-gradient(135deg, #f472b6 0%, #fb7185 100%);
 }
 
-/* 💜 薰衣草紫主题 */
-[data-theme="lavender"] {
-    --bg-page: #1e1b2e;
-    --bg-header: #2d2848;
-    --bg-card: #3c3660;
-    --bg-input: #1e1b2e;
-    --bg-hover: #4c4575;
-    --bg-table-header: #3c3660;
-    --text-main: #ede9fe;
-    --text-sub: #c4b5fd;
-    --text-inverse: #ffffff;
-    --border-color: #5b5280;
-    --shadow-sm: none;
-    --shadow-md: none;
-    --color-primary: #a78bfa;
-    --gradient-primary: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
-}
-
-/* ⬜ 极简白主题 */
-[data-theme="minimal"] {
-    --bg-page: #fafafa;
-    --bg-header: #ffffff;
-    --bg-card: #ffffff;
-    --bg-input: #f5f5f5;
-    --bg-hover: #e5e5e5;
-    --bg-table-header: #fafafa;
-    --text-main: #171717;
-    --text-sub: #525252;
-    --text-inverse: #ffffff;
-    --border-color: #d4d4d4;
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    --color-primary: #404040;
-    --gradient-primary: linear-gradient(135deg, #404040 0%, #737373 100%);
-}
-
-/* 🌃 赛博朋克主题 */
+/* 🤖 科幻赛博主题 */
 [data-theme="cyber"] {
     --bg-page: #0a0a0f;
-    --bg-header: #12121a;
-    --bg-card: #1a1a25;
+    --bg-header: linear-gradient(90deg, #12121a 0%, #0a1628 100%);
+    --bg-card: linear-gradient(145deg, #1a1a25 0%, #0f1a2a 100%);
     --bg-input: #0a0a0f;
-    --bg-hover: #252535;
+    --bg-hover: rgba(0, 255, 255, 0.1);
     --bg-table-header: #1a1a25;
     --text-main: #00ffff;
     --text-sub: #ff00ff;
     --text-inverse: #ffffff;
-    --border-color: #00ffff33;
-    --shadow-sm: 0 0 5px rgba(0, 255, 255, 0.3);
-    --shadow-md: 0 0 15px rgba(255, 0, 255, 0.3);
+    --border-color: rgba(0, 255, 255, 0.3);
+    --shadow-sm: 0 0 10px rgba(0, 255, 255, 0.4);
+    --shadow-md: 0 0 20px rgba(255, 0, 255, 0.4);
     --color-primary: #00ffff;
     --gradient-primary: linear-gradient(135deg, #ff00ff 0%, #00ffff 100%);
+}
+
+/* 🎨 卡通欢乐主题 */
+[data-theme="cartoon"] {
+    --bg-page: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    --bg-header: rgba(255, 255, 255, 0.9);
+    --bg-card: rgba(255, 255, 255, 0.95);
+    --bg-input: #f0fff4;
+    --bg-hover: rgba(102, 126, 234, 0.15);
+    --bg-table-header: rgba(168, 237, 234, 0.5);
+    --text-main: #5f27cd;
+    --text-sub: #10ac84;
+    --text-inverse: #ffffff;
+    --border-color: rgba(95, 39, 205, 0.2);
+    --shadow-sm: 0 3px 10px rgba(95, 39, 205, 0.1);
+    --shadow-md: 0 6px 20px rgba(95, 39, 205, 0.15);
+    --color-primary: #5f27cd;
+    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
 }
 
 body {
