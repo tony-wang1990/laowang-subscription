@@ -32,10 +32,7 @@
         </div>
         
         <div class="info-group weather-group">
-           <div class="weather-row user-location">
-             <span class="location-icon">📍</span>
-             {{ weather.location || '定位中...' }}
-           </div>
+
            <div class="weather-row main-weather">
              <span class="temp">{{ weather.temp }}</span>
              <span class="condition">{{ weather.condition }}</span>
@@ -122,13 +119,10 @@
                  周期: {{ sub.cycle_value }}{{ getUnitText(sub.cycle_unit) }}
                  <span class="refresh-icon">🔄</span>
               </div>
-              <div class="tag-info">🏷️ 公历</div>
            </div>
            
            <!-- 到期时间 -->
            <div class="td date">
-              <div class="main-date">{{ formatDate(sub.expire_date) }}</div>
-              <div class="main-date">{{ formatDate(sub.expire_date) }}</div>
               <div v-if="showLunar" class="lunar-date">农历: {{ getLunarDate(sub.expire_date) }}</div>
               <div class="days-left" :class="getDaysLeftClass(sub.daysLeft)">
                  还剩{{ sub.daysLeft }}天
@@ -419,13 +413,24 @@ const saveSubscription = async (formData) => {
   const method = currentEdit.value ? 'PUT' : 'POST'
   const url = currentEdit.value ? `/api/subscriptions/${currentEdit.value.id}` : '/api/subscriptions'
   
-  await fetch(url, {
-    method,
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-    body: JSON.stringify(formData)
-  })
-  closeModal()
-  fetchSubscriptions()
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(formData)
+    })
+    
+    if (!res.ok) {
+      const errData = await res.json()
+      throw new Error(errData.error || '保存失败')
+    }
+    
+    closeModal()
+    fetchSubscriptions()
+  } catch (e) {
+    alert('❌ 保存出错: ' + e.message)
+    console.error(e)
+  }
 }
 
 const deleteSubscription = async (id) => {

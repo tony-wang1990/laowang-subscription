@@ -67,8 +67,8 @@ router.post('/', (req, res) => {
 
     const params = [
         req.userId, name, category, expire_date, remind_days || 3,
-        cycle_value, cycle_unit, cycle, is_lunar ? 1 : 0, notes,
-        price, currency, auto_renew ? 1 : 0, note
+        cycle_value || null, cycle_unit || null, cycle || null, is_lunar ? 1 : 0, notes || null,
+        price || null, currency || 'CNY', auto_renew ? 1 : 0, note || null
     ];
 
     db.run(sql, params, function (err) {
@@ -99,8 +99,8 @@ router.put('/:id', (req, res) => {
 
     const params = [
         name, category, expire_date, remind_days,
-        cycle_value, cycle_unit, cycle, is_lunar ? 1 : 0, notes, status,
-        price, currency, auto_renew ? 1 : 0, note,
+        cycle_value || null, cycle_unit || null, cycle || null, is_lunar ? 1 : 0, notes || null, status,
+        price || null, currency || 'CNY', auto_renew ? 1 : 0, note || null,
         req.params.id, req.userId
     ];
 

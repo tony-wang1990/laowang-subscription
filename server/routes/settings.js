@@ -135,4 +135,12 @@ router.post('/test-wechat', async (req, res) => {
     }
 });
 
+// 触发自动续费检查 (Test Purpose)
+router.post('/trigger-renew', (req, res) => {
+    const { checkAutoRenew } = require('../cron/checker');
+    console.log('Manually triggering auto-renew check...');
+    checkAutoRenew();
+    res.json({ success: true, message: 'Auto-renew check triggered' });
+});
+
 module.exports = router;
