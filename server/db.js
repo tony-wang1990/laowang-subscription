@@ -121,52 +121,64 @@ function createSampleData() {
             console.log('Creating sample subscriptions...');
             const samples = [
                 {
-                    name: '甲骨文云 (Oracle Cloud)',
-                    category: 'VPS',
-                    expire_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30天后
-                    cycle: 'month',
-                    price: '0.00',
+                    name: 'Google Domains (example.com)',
+                    category: '域名',
+                    expire_date: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 60天后
+                    cycle: 'year',
+                    price: '12.00',
                     currency: 'USD',
-                    auto_renew: 1,
-                    remind_days: 3,
+                    auto_renew: 0,
+                    remind_days: 7,
                     status: 'active',
-                    note: 'ARM 4核 24G 永久免费实例'
+                    note: '主力域名，千万别忘了续费！'
                 },
                 {
                     name: 'Netflix 4K 高级会员',
                     category: '流媒体',
                     expire_date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 5天后
                     cycle: 'month',
-                    price: '15.00',
-                    currency: 'CNY',
-                    auto_renew: 1,
-                    remind_days: 7,
-                    status: 'active',
-                    note: '拼车账号，记得续费'
-                },
-                {
-                    name: '搬瓦工 GIA-E',
-                    category: 'VPS',
-                    expire_date: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                    cycle: 'year',
-                    price: '49.99',
-                    currency: 'USD',
-                    auto_renew: 0,
-                    remind_days: 14,
-                    status: 'active',
-                    note: '传家宝套餐'
-                },
-                {
-                    name: 'Spotify Premium',
-                    category: '音乐',
-                    expire_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 过期2天
-                    cycle: 'year',
-                    price: '99.00',
-                    currency: 'HKD',
+                    price: '45.00',
+                    currency: 'TRY',
                     auto_renew: 1,
                     remind_days: 3,
                     status: 'active',
-                    note: '家庭组车主'
+                    note: '土耳其区车队，记得给车主转账'
+                },
+                {
+                    name: '中国移动话费 (138****0000)',
+                    category: '生活缴费',
+                    expire_date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 10天后
+                    cycle: 'month',
+                    price: '58.00',
+                    currency: 'CNY',
+                    auto_renew: 0,
+                    remind_days: 3,
+                    status: 'active',
+                    note: '月底扣费，保持余额充足'
+                },
+                {
+                    name: '招商银行信用卡还款',
+                    category: '金融',
+                    expire_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 3天后
+                    cycle: 'month',
+                    price: '0.00',
+                    currency: 'CNY',
+                    auto_renew: 0,
+                    remind_days: 5,
+                    status: 'active',
+                    note: '账单日: 5号，还款日: 25号'
+                },
+                {
+                    name: '甲骨文云 (Oracle Cloud)',
+                    category: 'VPS',
+                    expire_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    cycle: 'year',
+                    price: '0.00',
+                    currency: 'USD',
+                    auto_renew: 1,
+                    remind_days: 7,
+                    status: 'active',
+                    note: 'ARM 4核 24G 永久免费机器'
                 }
             ];
 

@@ -1,6 +1,14 @@
 # 老王订阅管理系统 (LaoWang Subscription) v1.1
 
-基于 Vue 3 + Express 的一站式订阅管理系统。不仅是一个前端看板，更包含完整的后端逻辑，支持订阅状态检测、自动续期、多渠道通知等核心功能。
+> **一个用于管理续费、到期提醒的私有化部署工具**
+
+你是否经常遇到以下问题？
+- ❌ 域名悄悄到期，网站打不开才发现。
+- ❌ 忘记取消试用的 Netflix/Spotify 会员，白白扣费。
+- ❌ VPS 服务器太多，记不清哪台机器什么时候到期。
+- ❌ 信用卡办太多，错过了免息还款日。
+
+**LaoWang Subscription** 就是为了解决这些问题而生的。它是一个基于 Vue 3 + Express 的全栈订阅管理系统，不仅仅是一张简单的Excel表格，它拥有**真正的后端检测能力**，能通过微信、Telegram 等渠道精准地提醒你“该交保护费了”！
 
 <p align="center">
   <a href="https://test.199060.xyz/" target="_blank">
@@ -8,21 +16,43 @@
   </a>
 </p>
 
+## ✨ 核心功能详解
+
+### 1. 📅 精准的订阅周期管理
+支持多种计费周期订阅，系统会自动计算剩余天数。
+- **周期支持**：年付、月付、日滚、一次性。
+- **自动续费** (v1.1新增)：对于开启自动续费的订阅（如网飞、话费），到期后系统会自动将“过期日期”再延长一个周期，无需手动修改，这就是“懒人模式”。
+
+### 2. 📢 多渠道即时通知
+不要指望你能每天主动打开网页看 Dashboard，只有**推送到手机**的消息才是有效的。
+- **Telegram Bot**：即时消息推送。
+- **WeChat (企业微信)**：国内最稳的推送通道，支持微信直接接收。
+- **Bark (iOS)**：苹果用户神器。
+- **Webhook**：想接什么接什么。
+
+### 3. 💰 资产与费用统计
+- **多币种支持**：支持 CNY, USD, HKD, JPY, EUR 等，自动换算（需手动设定汇率或参考值）。
+- **费用统计**：一眼看清每个月在这些杂七杂八的订阅上花了多少钱。
+
+### 4. 🌚 贴心的农历支持 (v1.1)
+适合中国宝宝体质。
+- 家人生日、传统节日的提醒，支持农历日期显示。
+- 在发送通知时，会贴心地附带当天的农历日期。
+
+### 5. 🛠️ 现代化技术栈与部署
+- **前后端分离**：Vue 3 + Vite + Tailwind CSS (前端) / Node.js + Express (后端)。
+- **轻量级数据库**：使用 SQLite，无需配置 MySQL，一个文件即数据库，迁移备份极其简单。
+- **Docker 一键部署**：支持 x86 和 ARM (甲骨文云友好)，一条命令即可跑起来。
+
+---
+
 ## 🚀 v1.1 更新日志 (Latest)
 
-本次更新集中修复了先前版本 (`v1.0`) 初始化脚本缺失字段导致无法运行的问题，并新增了大量实用功能：
+> **重要**：从 v1.0 升级的用户，系统会自动迁移数据库，无需任何手动操作。
 
-### 🆕 新增功能
-1.  **订阅字段扩展**：新增 `周期 (Cycle)`、`价格 (Price)`、`货币 (Currency)`、`自动续费 (Auto-Renew)`、`备注 (Note)` 等字段，管理更精细。
-2.  **货币选择器**：支持 CNY, USD, HKD, EUR, JPY, GBP 等主流货币选择。
-3.  **自动续费逻辑**：后端新增定时任务，针对开启“自动续费”的订阅，到期后自动更新有效期（支持按年/月/日/永久 逻辑）。
-4.  **农历日期支持**：通知消息现在可以根据设置显示农历日期（需在设置中开启）。
-5.  **智能天气源**：重构天气获取逻辑，增加了多重备用源 (Open-Meteo 等)，解决天气显示不稳定的问题。
-
-### 🐛 修复与优化
-1.  **✅ 修复数据库崩溃问题**：修复了 `v1.0` 版本 `schema.sql` 缺失字段导致启动报错 (`SQLITE_ERROR: table subscriptions has no column named cycle`) 的严重 Bug. **现在系统会自动检查并迁移旧数据库，旧版本用户可无缝升级。**
-2.  **界面优化**：修复了列表页日期重复显示的问题；移除了天气组件中冗余的地理位置文字；移除了列表标签中多余的“公历”字样。
-3.  **稳定性修复**：修复了特定情况下保存订阅导致后端 crash 的问题。
+- 🆕 **新增字段**：`周期`、`价格`、`货币`、`自动续费`、`备注`。
+- 🆕 **功能增强**：实装了自动续费逻辑；增加了农历显示开关；优化了天气源（Open-Meteo）。
+- 🐛 **Bug修复**：修复了数据库缺字段导致的启动崩溃问题；修复了日期显示重复的UI问题。
 
 ---
 
@@ -34,49 +64,28 @@
 | :---: | :---: |
 | ![Light](docs/images/dashboard_light.png) | ![Dark](docs/images/dashboard_dark.png) |
 
+---
 
-## ✨ 核心特性
+## 🚀 部署指南 (推荐 Docker)
 
--   🎨 **现代化 UI**: 采用 Tailwind CSS 构建，支持深色/浅色模式自动切换。
--   ⚙️ **核心逻辑**: 真正的后端管理，支持 Cron 定时任务检测过期订阅。
--   📢 **多渠道通知**: 支持 Telegram, Wechat (企业微信), Bark (iOS), Webhook 通知。
--   🌚 **农历支持**: 适合中国用户习惯，支持农历日期显示。
--   🔄 **自动续费**: 支持订阅周期管理，自动延长有效期，无需手动修改。
--   🌍 **多语言**: 支持中英双语切换。
--   🐳 **Docker**: 提供多架构 (AMD64/ARM64) 镜像，一键部署。
-
-## 🚀 部署指南 (VPS)
-
-本项目推荐使用 Docker 在 VPS 上进行部署。支持甲骨文 ARM (Oracle ARM) 及常规 AMD64 服务器。
-
-### 前置要求
-
--   一台拥有公网 IP 的 Linux 服务器 (VPS)
--   已安装 [Docker](https://docs.docker.com/get-docker/) 和 [Docker Compose](https://docs.docker.com/compose/install/)
-
-### 方式一：Docker Run (最简方式)
-
-直接运行以下命令即可启动服务：
+### 方式一：Docker Run (最快)
 
 ```bash
 docker run -d \
   --name laowang-subscription \
   -p 8080:8080 \
   --restart always \
-  -v ./database:/app/database \
+  -v $(pwd)/database:/app/database \
+  -e TZ=Asia/Shanghai \
   ghcr.io/tony-wang1990/laowang-subscription:main
 ```
 
--   启动后，访问 `http://IP:8080` 即可。
--   数据文件会保存在当前目录下的 `database` 文件夹中。
-
 ### 方式二：Docker Compose (推荐)
 
-在服务器上创建一个 `docker-compose.yml` 文件：
+创建 `docker-compose.yml`：
 
 ```yaml
 version: '3'
-
 services:
   app:
     image: ghcr.io/tony-wang1990/laowang-subscription:main
@@ -90,72 +99,35 @@ services:
       - TZ=Asia/Shanghai
 ```
 
-然后运行：
-
+启动：
 ```bash
 docker-compose up -d
 ```
 
-### 🔄 如何更新
-
-当项目均有更新（发布新镜像）时，在 VPS 上执行以下命令即可无损升级：
-
-#### Docker Compose (推荐)
-
+### 🔄 如何自动更新？
+推荐使用 **Watchtower** 实现全自动更新：
 ```bash
-# 1. 拉取最新镜像
-docker-compose pull
-
-# 2.重新创建容器 (不会删除数据)
-docker-compose up -d --force-recreate
-
-# 3. 清理旧镜像 (可选)
-docker image prune -f
+docker run -d \
+    --name watchtower \
+    --restart always \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    containrrr/watchtower \
+    --cleanup \
+    --interval 3600 \
+    laowang-subscription
 ```
 
-#### Docker Run
+---
 
-```bash
-# 1. 停止并删除容器
-docker stop laowang-subscription
-docker rm laowang-subscription
-
-# 2. 拉取最新镜像
-docker pull ghcr.io/tony-wang1990/laowang-subscription:main
-
-# 3. 重新运行命令 (把之前的 docker run 命令再跑一遍)
-docker run -d ...
-```
-
-### 方式三：手动构建
-
-如果您想自己构建镜像：
-
-```bash
-git clone https://github.com/tony-wang1990/laowang-subscription.git
-cd laowang-subscription
-docker build -t laowang-subscription .
-docker run -d -p 8080:8080 laowang-subscription
-```
-
-## 🛠️ 环境变量
-
-| 变量名 | 默认值 | 描述 |
+## ⚙️ 环境变量
+| 变量名 | 默认值 | 说明 |
 | :--- | :--- | :--- |
-| `PORT` | 8080 | 服务监听端口 |
-| `JWT_SECRET` | 随机生成 | 用于 session 加密的密钥 (可选) |
-| `WEB_PORT` | - | 用于 Web 界面显示的端口 (通常无需设置) |
+| `PORT` | 8080 | 服务端口 |
+| `JWT_SECRET` | 随机 | Session密钥 |
+| `TZ` | UTC | 时区 (建议设置 Asia/Shanghai) |
 
-## 📦 架构说明
+---
 
--   **Frontend**: Vue 3, Vite, Tailwind CSS
--   **Backend**: Node.js, Express, SQLite (better-sqlite3 / sqlite3)
--   **Database**: SQLite (存储订阅历史和设置)
-
-## 🤝 贡献
-
-欢迎提交 Issue 和 Pull Request！
-
-## 📄 许可证
-
-MIT License
+## 🤝 贡献与支持
+觉得好用请点个 ⭐️ Star！有问题欢迎提 Issue。
+License: MIT
