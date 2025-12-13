@@ -55,8 +55,30 @@ function initDb() {
             console.error('Error initializing database schema:', err.message);
         } else {
             console.log('Database schema initialized.');
+            checkAndMigrate();
             createDefaultUser();
         }
+    });
+}
+
+// 检查并迁移缺失的列
+function checkAndMigrate() {
+    const columns = [
+        { name: 'cycle', type: 'TEXT' },
+        { name: 'price', type: 'TEXT' },
+        { name: 'currency', type: 'TEXT DEFAULT "CNY"' },
+        { name: 'auto_renew', type: 'BOOLEAN DEFAULT 0' },
+        { name: 'note', type: 'TEXT' }
+    ];
+
+    columns.forEach(col => {
+        db.run(`ALTER TABLE subscriptions ADD COLUMN ${col.name} ${col.type}`, (err) => {
+            if (err && !err.message.includes('duplicate column name')) {
+                console.error(`Error adding column ${col.name}:`, err.message);
+            } else if (!err) {
+                console.log(`Added missing column: ${col.name}`);
+            }
+        });
     });
 }
 

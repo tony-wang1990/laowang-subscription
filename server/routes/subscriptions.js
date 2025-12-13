@@ -48,7 +48,8 @@ router.post('/', (req, res) => {
     console.log('Received create subscription request:', req.body);
     const {
         name, category, expire_date, remind_days,
-        cycle_value, cycle_unit, is_lunar, notes
+        cycle_value, cycle_unit, cycle, is_lunar, notes,
+        price, currency, auto_renew, note
     } = req.body;
 
     if (!name || !expire_date) {
@@ -59,13 +60,15 @@ router.post('/', (req, res) => {
     const sql = `
     INSERT INTO subscriptions (
       user_id, name, category, expire_date, remind_days,
-      cycle_value, cycle_unit, is_lunar, notes
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      cycle_value, cycle_unit, cycle, is_lunar, notes,
+      price, currency, auto_renew, note
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
     const params = [
         req.userId, name, category, expire_date, remind_days || 3,
-        cycle_value, cycle_unit, is_lunar ? 1 : 0, notes
+        cycle_value, cycle_unit, cycle, is_lunar ? 1 : 0, notes,
+        price, currency, auto_renew ? 1 : 0, note
     ];
 
     db.run(sql, params, function (err) {
@@ -82,19 +85,22 @@ router.post('/', (req, res) => {
 router.put('/:id', (req, res) => {
     const {
         name, category, expire_date, remind_days,
-        cycle_value, cycle_unit, is_lunar, notes, status
+        cycle_value, cycle_unit, cycle, is_lunar, notes, status,
+        price, currency, auto_renew, note
     } = req.body;
 
     const sql = `
     UPDATE subscriptions SET
       name = ?, category = ?, expire_date = ?, remind_days = ?,
-      cycle_value = ?, cycle_unit = ?, is_lunar = ?, notes = ?, status = ?
+      cycle_value = ?, cycle_unit = ?, cycle = ?, is_lunar = ?, notes = ?, status = ?,
+      price = ?, currency = ?, auto_renew = ?, note = ?
     WHERE id = ? AND user_id = ?
   `;
 
     const params = [
         name, category, expire_date, remind_days,
-        cycle_value, cycle_unit, is_lunar ? 1 : 0, notes, status,
+        cycle_value, cycle_unit, cycle, is_lunar ? 1 : 0, notes, status,
+        price, currency, auto_renew ? 1 : 0, note,
         req.params.id, req.userId
     ];
 

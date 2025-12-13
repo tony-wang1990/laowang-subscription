@@ -14,9 +14,14 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   remind_days INTEGER DEFAULT 3,
   cycle_value INTEGER,
   cycle_unit TEXT,
+  cycle TEXT,
   is_lunar BOOLEAN DEFAULT 0,
+  price TEXT,
+  currency TEXT DEFAULT 'CNY',
+  auto_renew BOOLEAN DEFAULT 0,
   status TEXT DEFAULT 'active',
   notes TEXT,
+  note TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users (id)
 );

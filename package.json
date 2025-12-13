@@ -25,6 +25,7 @@
     "dotenv": "^17.2.3",
     "express": "^4.21.0",
     "jsonwebtoken": "^9.0.3",
+    "lunar-javascript": "^1.7.7",
     "node-cron": "^4.2.1",
     "pinia": "^3.0.4",
     "sqlite3": "^5.1.7",

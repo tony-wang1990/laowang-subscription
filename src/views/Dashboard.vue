@@ -88,7 +88,7 @@
           </select>
         </div>
         <div class="toggle-wrapper">
-          <label><input type="checkbox"> 显示农历</label>
+          <label><input type="checkbox" v-model="showLunar"> 显示农历</label>
         </div>
         <button class="btn-add" @click="openAddModal">添加新订阅</button>
       </div>
@@ -128,7 +128,8 @@
            <!-- 到期时间 -->
            <div class="td date">
               <div class="main-date">{{ formatDate(sub.expire_date) }}</div>
-              <div class="lunar-date">农历: 暂无数据</div>
+              <div class="main-date">{{ formatDate(sub.expire_date) }}</div>
+              <div v-if="showLunar" class="lunar-date">农历: {{ getLunarDate(sub.expire_date) }}</div>
               <div class="days-left" :class="getDaysLeftClass(sub.daysLeft)">
                  还剩{{ sub.daysLeft }}天
               </div>
@@ -185,13 +186,16 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+
 import SubscriptionModal from '../components/SubscriptionModal.vue'
+import { Calendar } from 'lunar-javascript'
 
 const router = useRouter()
 const subscriptions = ref([])
 const loading = ref(false)
 const searchQuery = ref('')
 const filterCategory = ref('all')
+const showLunar = ref(false)
 const isModalOpen = ref(false)
 const currentEdit = ref(null)
 const currentTime = ref('')
@@ -295,22 +299,60 @@ const fetchWeather = async () => {
     }
   } catch (e) { console.warn('OioWeb weather failed', e) }
 
-  // 3. 最后的兜底 - Wttr.in (国际源)
+  // 3. 兜底1 - Wttr.in (国际源)
   try {
     const res = await fetch('https://wttr.in/?format=%l:+%c+%t')
     const text = await res.text()
-    // format like: "Beijing: ☀️ +20°C"
     const parts = text.split(':')
     if (parts.length >= 2) {
       weather.value = {
         temp: parts[1].trim(),
-        condition: '', // icons included in temp part for wttr
+        condition: '', 
         location: parts[0].trim()
       }
+      return
     }
+  } catch (e) { console.warn('Wttr.in failed', e) }
+
+  // 4. 终极兜底 - Open-Meteo (需配合 IP 定位，这里简化为根据时区/默认坐标)
+  // 由于获取坐标可能也失败，这里用一个通用方案
+  try {
+     // 尝试通过 IP 获取经纬度 (ipapi.co 有限制，使用 ip-api.com)
+     const ipRes = await fetch('http://ip-api.com/json/')
+     const ipData = await ipRes.json()
+     if (ipData.status === 'success') {
+       const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${ipData.lat}&longitude=${ipData.lon}&current=temperature_2m,weather_code`)
+       const wData = await wRes.json()
+       const code = wData.current.weather_code
+       const temp = wData.current.temperature_2m + wData.current_units.temperature_2m
+       
+       // Weather code map simplify
+       let cond = '晴/多云'
+       if (code > 3) cond = '阴/雾'
+       if (code > 50) cond = '雨'
+       if (code > 70) cond = '雪'
+       
+       weather.value = {
+         temp: temp,
+         condition: cond,
+         location: ipData.city || ipData.regionName
+       }
+       return
+     }
   } catch (e) {
-    console.error('All weather providers failed')
+    console.error('All weather sources failed', e)
     weather.value = { temp: '--', condition: '离线', location: '未知' }
+  }
+}
+
+const getLunarDate = (dateStr) => {
+  if (!dateStr) return ''
+  try {
+    const d = new Date(dateStr)
+    const lunar = Calendar.fromDate(d)
+    return `${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`
+  } catch (e) {
+    return '转换失败'
   }
 }
 

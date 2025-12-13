@@ -47,11 +47,27 @@
           </div>
         </div>
         
-        <div class="form-group">
-          <label>到期日期 *</label>
-          <div class="date-input-wrapper">
-            <input v-model="form.expire_date" type="date" required>
-            <button type="button" class="calc-btn" @click="calculateExpireDate">📅 自动计算到期日期</button>
+        <div class="form-row">
+          <div class="form-group">
+             <label>价格</label>
+             <div class="input-group">
+               <input v-model="form.price" type="text" placeholder="0.00">
+               <select v-model="form.currency" style="width: 100px">
+                 <option value="CNY">CNY</option>
+                 <option value="USD">USD</option>
+                 <option value="HKD">HKD</option>
+                 <option value="EUR">EUR</option>
+                 <option value="JPY">JPY</option>
+                 <option value="GBP">GBP</option>
+               </select>
+             </div>
+          </div>
+          <div class="form-group">
+            <label>到期日期 *</label>
+            <div class="date-input-wrapper">
+              <input v-model="form.expire_date" type="date" required>
+              <button type="button" class="calc-btn" @click="calculateExpireDate">📅 自动计算</button>
+            </div>
           </div>
         </div>
         
@@ -75,8 +91,13 @@
         </div>
         
         <div class="form-group">
-          <label>备注</label>
-          <textarea v-model="form.notes" rows="3"></textarea>
+          <label>备注 (Note)</label>
+          <textarea v-model="form.note" rows="2" placeholder="简短备注..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>详细说明 (Notes)</label>
+          <textarea v-model="form.notes" rows="3" placeholder="详细说明..."></textarea>
         </div>
         
         <div class="modal-footer">
@@ -111,6 +132,9 @@ const form = reactive({
   remind_days: 3,
   active: true,
   auto_renew: false,
+  price: '',
+  currency: 'CNY',
+  note: '',
   notes: ''
 })
 
@@ -137,7 +161,11 @@ const resetForm = () => {
   form.expire_date = ''
   form.remind_days = 3
   form.active = true
+  form.active = true
   form.auto_renew = false
+  form.price = ''
+  form.currency = 'CNY'
+  form.note = ''
   form.notes = ''
 }
 
