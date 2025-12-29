@@ -33,8 +33,8 @@ COPY --from=builder /app/server ./server
 RUN mkdir -p /app/database && chmod 777 /app/database
 
 ENV NODE_ENV=production
-ENV PORT=8080
-EXPOSE 8080
+ENV PORT=3001
+EXPOSE 3001
 
 # Use dumb-init
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]

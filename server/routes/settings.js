@@ -135,6 +135,36 @@ router.post('/test-wechat', async (req, res) => {
     }
 });
 
+// Test Notification - Email
+router.post('/test-email', async (req, res) => {
+    const { emailHost, emailPort, emailUser, emailPass, emailTo } = req.body;
+    const { sendEmailNotification } = require('../services/email');
+
+    const config = {
+        host: emailHost,
+        port: parseInt(emailPort) || 465,
+        secure: true,
+        user: emailUser,
+        pass: emailPass
+    };
+
+    try {
+        const success = await sendEmailNotification(
+            config,
+            emailTo,
+            '🎉 LaoWang Subscription 测试',
+            '**测试消息**\n\n您的邮件通知配置成功！\n\n📧 发件人: ' + emailUser + '\n📬 收件人: ' + emailTo
+        );
+        if (success) {
+            res.json({ success: true });
+        } else {
+            res.status(400).json({ error: '发送失败，请检查 SMTP 配置' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // 触发自动续费检查 (Test Purpose)
 router.post('/trigger-renew', (req, res) => {
     const { checkAutoRenew } = require('../cron/checker');
@@ -144,3 +174,6 @@ router.post('/trigger-renew', (req, res) => {
 });
 
 module.exports = router;
+
+// ========== 外部触发 API（不需要 JWT 认证，使用 API Token） ==========
+// 这个路由需要在 index.js 中单独注册

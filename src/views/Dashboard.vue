@@ -62,7 +62,44 @@
         <p>使用搜索与分类快速定位订阅，开启农历显示可同步查看农历日期</p>
       </div>
 
+      <!-- 统计仪表盘 -->
+      <div class="stats-dashboard">
+        <div class="stat-card urgent">
+          <div class="stat-icon">🔔</div>
+          <div class="stat-info">
+            <div class="stat-value">{{ stats.urgentCount }}</div>
+            <div class="stat-label">7天内到期</div>
+          </div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-icon">📅</div>
+          <div class="stat-info">
+            <div class="stat-value">{{ stats.monthlyCount }}</div>
+            <div class="stat-label">本月到期</div>
+          </div>
+        </div>
+        <div class="stat-card money">
+          <div class="stat-icon">💰</div>
+          <div class="stat-info">
+            <div class="stat-value">¥{{ stats.monthlyExpense }}</div>
+            <div class="stat-label">本月费用</div>
+          </div>
+        </div>
+        <div class="stat-card total">
+          <div class="stat-icon">📈</div>
+          <div class="stat-info">
+            <div class="stat-value">¥{{ stats.yearlyExpense }}</div>
+            <div class="stat-label">年度预估</div>
+          </div>
+        </div>
+      </div>
+
       <div class="toolbar">
+        <!-- 服务器离线警告 -->
+        <div v-if="!isServerOnline" class="server-offline-alert">
+          ⚠️ 后台服务未连接，数据无法同步。请检查终端是否运行正常。
+        </div>
+
         <div class="search-wrapper">
           <input 
             v-model="searchQuery" 
@@ -97,6 +134,23 @@
             @click="viewMode = 'card'; saveViewMode()"
             title="卡片视图"
           >⊞</button>
+          <button 
+            class="switch-btn" 
+            :class="{ active: viewMode === 'calendar' }" 
+            @click="viewMode = 'calendar'; saveViewMode()"
+            title="日历视图"
+          >📅</button>
+        </div>
+        <div class="export-wrapper">
+          <button class="btn-export" @click="exportJSON">📤 导出</button>
+          <button class="btn-import" @click="triggerImport">📥 导入</button>
+          <input 
+            type="file" 
+            ref="importFileInput" 
+            @change="handleImport" 
+            accept=".json" 
+            style="display: none"
+          >
         </div>
         <button class="btn-add" @click="openAddModal">添加新订阅</button>
       </div>
@@ -251,6 +305,74 @@
           </div>
         </div>
       </div>
+
+      <!-- 日历视图 -->
+      <div v-show="viewMode === 'calendar'" class="calendar-view">
+        <div class="calendar-header">
+          <button class="cal-nav-btn" @click="changeMonth(-1)">◀</button>
+          <h3 class="cal-title">{{ calendarYear }}年{{ calendarMonth + 1 }}月</h3>
+          <button class="cal-nav-btn" @click="changeMonth(1)">▶</button>
+          <button class="cal-today-btn" @click="goToToday">今天</button>
+        </div>
+        
+        <div class="calendar-grid">
+          <div class="cal-weekday" v-for="day in ['日', '一', '二', '三', '四', '五', '六']" :key="day">
+            {{ day }}
+          </div>
+          
+          <div 
+            v-for="(day, index) in calendarDays" 
+            :key="index"
+            class="cal-day"
+            :class="{
+              'other-month': !day.isCurrentMonth,
+              'today': day.isToday,
+              'has-expire': day.subscriptions.length > 0,
+              'has-urgent': day.subscriptions.some(s => s.daysLeft <= 3),
+              'has-expired': day.subscriptions.some(s => s.daysLeft < 0)
+            }"
+            @click="selectedDate = day.date"
+          >
+            <span class="day-number">{{ day.dayNum }}</span>
+            <div class="day-dots" v-if="day.subscriptions.length > 0">
+              <span 
+                v-for="(sub, i) in day.subscriptions.slice(0, 3)" 
+                :key="i" 
+                class="dot"
+                :class="{ 
+                  'dot-expired': sub.daysLeft < 0,
+                  'dot-urgent': sub.daysLeft >= 0 && sub.daysLeft <= 3,
+                  'dot-warning': sub.daysLeft > 3 && sub.daysLeft <= 7
+                }"
+              ></span>
+              <span v-if="day.subscriptions.length > 3" class="dot-more">+{{ day.subscriptions.length - 3 }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 选中日期的订阅列表 -->
+        <div class="calendar-detail" v-if="selectedDateSubscriptions.length > 0">
+          <h4>{{ formatSelectedDate }} 到期的订阅</h4>
+          <div class="detail-list">
+            <div 
+              v-for="sub in selectedDateSubscriptions" 
+              :key="sub.id" 
+              class="detail-item"
+              :class="{ 'expired': sub.daysLeft < 0 }"
+            >
+              <span class="detail-icon">{{ getCategoryIcon(sub.category) }}</span>
+              <span class="detail-name">{{ sub.name }}</span>
+              <span class="detail-price">{{ formatPrice(sub) }}</span>
+              <span class="detail-status" :class="sub.daysLeft < 0 ? 'text-red' : 'text-orange'">
+                {{ sub.daysLeft < 0 ? `已过期${Math.abs(sub.daysLeft)}天` : `剩余${sub.daysLeft}天` }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="calendar-detail empty" v-else-if="selectedDate">
+          <p>{{ formatSelectedDate }} 没有到期的订阅</p>
+        </div>
+      </div>
     </main>
     
     <SubscriptionModal 
@@ -259,6 +381,13 @@
       @close="closeModal"
       @save="saveSubscription"
     />
+    
+    <!-- 页脚版本信息 -->
+    <footer class="dashboard-footer">
+      <span>LaoWang Subscription v1.5.0</span>
+      <span class="separator">|</span>
+      <a href="https://github.com/tony-wang1990/laowang-subscription" target="_blank">GitHub</a>
+    </footer>
   </div>
 </template>
 
@@ -274,12 +403,277 @@ const subscriptions = ref([])
 const loading = ref(false)
 const searchQuery = ref('')
 const filterCategory = ref('all')
+
 const showLunar = ref(false)
 const isModalOpen = ref(false)
 const currentEdit = ref(null)
 const currentTime = ref('')
 const dateParts = ref({ year: '', month: '', day: '', weekday: '' })
-const weather = ref({ temp: '--', condition: '请稍候', location: '检查网络...' })
+const weather = ref({ temp: '--', condition: '查询中...', location: '...' })
+const isServerOnline = ref(true)
+
+const checkServerStatus = async () => {
+  try {
+    const res = await fetch('/api/health')
+    const contentType = res.headers.get('content-type')
+    if (res.ok && contentType && contentType.includes('application/json')) {
+      isServerOnline.value = true
+    } else {
+      isServerOnline.value = false
+    }
+  } catch (e) {
+    isServerOnline.value = false
+  }
+}
+
+
+// 统计数据计算
+const stats = computed(() => {
+  const now = new Date()
+  const currentMonth = now.getMonth()
+  const currentYear = now.getFullYear()
+  
+  let urgentCount = 0      // 7天内到期
+  let monthlyCount = 0     // 本月到期
+  let monthlyExpense = 0   // 本月费用 (CNY)
+  let yearlyExpense = 0    // 年度预估费用 (CNY)
+  
+  // 简单汇率转换 (粗略估计)
+  const exchangeRates = {
+    'CNY': 1, 'USD': 7.2, 'EUR': 7.8, 'GBP': 9.1, 'JPY': 0.048,
+    'HKD': 0.92, 'TRY': 0.22, 'RUB': 0.078, 'KRW': 0.0054, 'FREE': 0
+  }
+  
+  subscriptions.value.forEach(sub => {
+    if (sub.status !== 'active') return
+    
+    const expireDate = new Date(sub.expire_date)
+    const daysLeft = sub.daysLeft
+    
+    // 7天内到期
+    if (daysLeft >= 0 && daysLeft <= 7) {
+      urgentCount++
+    }
+    
+    // 本月到期
+    if (expireDate.getMonth() === currentMonth && expireDate.getFullYear() === currentYear) {
+      monthlyCount++
+    }
+    
+    // 费用计算
+    const price = parseFloat(sub.price) || 0
+    const currency = sub.currency || 'CNY'
+    const rate = exchangeRates[currency] || 1
+    const priceCNY = price * rate
+    
+    // 根据周期计算年度费用
+    const cycleUnit = sub.cycle_unit || 'month'
+    const cycleValue = parseInt(sub.cycle_value) || 1
+    
+    let annualCost = 0
+    if (cycleUnit === 'day') {
+      annualCost = priceCNY * (365 / cycleValue)
+    } else if (cycleUnit === 'month') {
+      annualCost = priceCNY * (12 / cycleValue)
+    } else if (cycleUnit === 'year') {
+      annualCost = priceCNY / cycleValue
+    }
+    
+    yearlyExpense += annualCost
+    
+    // 本月费用：本月到期的订阅费用
+    if (expireDate.getMonth() === currentMonth && expireDate.getFullYear() === currentYear) {
+      monthlyExpense += priceCNY
+    }
+  })
+  
+  return {
+    urgentCount,
+    monthlyCount,
+    monthlyExpense: monthlyExpense.toFixed(0),
+    yearlyExpense: yearlyExpense.toFixed(0)
+  }
+})
+
+// ========== 日历视图逻辑 ==========
+const calendarMonth = ref(new Date().getMonth())
+const calendarYear = ref(new Date().getFullYear())
+const selectedDate = ref(null)
+
+// 切换月份
+const changeMonth = (delta) => {
+  calendarMonth.value += delta
+  if (calendarMonth.value > 11) {
+    calendarMonth.value = 0
+    calendarYear.value++
+  } else if (calendarMonth.value < 0) {
+    calendarMonth.value = 11
+    calendarYear.value--
+  }
+}
+
+// 回到今天
+const goToToday = () => {
+  const now = new Date()
+  calendarMonth.value = now.getMonth()
+  calendarYear.value = now.getFullYear()
+  selectedDate.value = now.toISOString().split('T')[0]
+}
+
+// 生成日历网格数据
+const calendarDays = computed(() => {
+  const year = calendarYear.value
+  const month = calendarMonth.value
+  
+  // 本月第一天和最后一天
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+  
+  // 本月第一天是星期几
+  const startWeekday = firstDay.getDay()
+  
+  // 需要显示的上月天数
+  const prevMonthDays = startWeekday
+  const prevMonthLastDay = new Date(year, month, 0).getDate()
+  
+  // 今天
+  const today = new Date()
+  const todayStr = today.toISOString().split('T')[0]
+  
+  const days = []
+  
+  // 上月的天
+  for (let i = prevMonthDays - 1; i >= 0; i--) {
+    const dayNum = prevMonthLastDay - i
+    const date = new Date(year, month - 1, dayNum)
+    const dateStr = date.toISOString().split('T')[0]
+    days.push({
+      dayNum,
+      date: dateStr,
+      isCurrentMonth: false,
+      isToday: dateStr === todayStr,
+      subscriptions: getSubscriptionsForDate(dateStr)
+    })
+  }
+  
+  // 本月的天
+  for (let i = 1; i <= lastDay.getDate(); i++) {
+    const date = new Date(year, month, i)
+    const dateStr = date.toISOString().split('T')[0]
+    days.push({
+      dayNum: i,
+      date: dateStr,
+      isCurrentMonth: true,
+      isToday: dateStr === todayStr,
+      subscriptions: getSubscriptionsForDate(dateStr)
+    })
+  }
+  
+  // 下月的天（补齐到 42 天 = 6 行）
+  const remaining = 42 - days.length
+  for (let i = 1; i <= remaining; i++) {
+    const date = new Date(year, month + 1, i)
+    const dateStr = date.toISOString().split('T')[0]
+    days.push({
+      dayNum: i,
+      date: dateStr,
+      isCurrentMonth: false,
+      isToday: dateStr === todayStr,
+      subscriptions: getSubscriptionsForDate(dateStr)
+    })
+  }
+  
+  return days
+})
+
+// 获取某天到期的订阅
+const getSubscriptionsForDate = (dateStr) => {
+  return subscriptions.value.filter(sub => {
+    return sub.expire_date === dateStr && sub.status === 'active'
+  })
+}
+
+// 选中日期的订阅
+const selectedDateSubscriptions = computed(() => {
+  if (!selectedDate.value) return []
+  return subscriptions.value.filter(sub => {
+    return sub.expire_date === selectedDate.value && sub.status === 'active'
+  })
+})
+
+// 格式化选中日期显示
+const formatSelectedDate = computed(() => {
+  if (!selectedDate.value) return ''
+  const date = new Date(selectedDate.value)
+  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
+})
+
+// 导入导出功能
+const importFileInput = ref(null)
+
+const exportJSON = async () => {
+  const token = localStorage.getItem('token')
+  try {
+    const res = await fetch('/api/subscriptions/export/json', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    const data = await res.json()
+    
+    // 创建下载链接
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `laowang-subscriptions-${new Date().toISOString().split('T')[0]}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    
+    alert(`✅ 导出成功！共 ${data.count} 条订阅`)
+  } catch (e) {
+    alert('❌ 导出失败: ' + e.message)
+  }
+}
+
+const triggerImport = () => {
+  importFileInput.value?.click()
+}
+
+const handleImport = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+  
+  try {
+    const text = await file.text()
+    const data = JSON.parse(text)
+    
+    if (!data.subscriptions || !Array.isArray(data.subscriptions)) {
+      throw new Error('无效的文件格式')
+    }
+    
+    if (!confirm(`确认导入 ${data.subscriptions.length} 条订阅？\n(这将添加新订阅，不会覆盖现有数据)`)) {
+      return
+    }
+    
+    const token = localStorage.getItem('token')
+    const res = await fetch('/api/subscriptions/import/json', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ subscriptions: data.subscriptions })
+    })
+    
+    const result = await res.json()
+    alert(`✅ ${result.message}`)
+    fetchSubscriptions()
+  } catch (e) {
+    alert('❌ 导入失败: ' + e.message)
+  }
+  
+  // 清空 input 以允许重复选择同一文件
+  event.target.value = ''
+}
 
 // View Mode Logic
 const viewMode = ref(localStorage.getItem('viewMode') || 'table')
@@ -334,8 +728,10 @@ onMounted(() => {
   fetchSubscriptions()
   updateTime()
   fetchWeather()
+  checkServerStatus()
   setInterval(updateTime, 1000)
   setInterval(fetchWeather, 600000) // 每10分钟更新天气
+  setInterval(checkServerStatus, 5000) // 每5秒检查服务器状态
   applyTheme() // Init theme
 })
 
@@ -351,80 +747,48 @@ const updateTime = () => {
   }
 }
 
-// 获取天气信息 - 多源自动切换 (增强中国地区支持)
+
+
+// 获取天气信息 (优先 wttr.in 获取实时温度，失败后降级到 vvhan)
 const fetchWeather = async () => {
-  // 1. 尝试使用 vvhan (国内极速源)
   try {
-    const res = await fetch('https://api.vvhan.com/api/weather')
-    const data = await res.json()
-    if (data.success && data.info) {
+    // 1. 尝试 wttr.in (支持实时温度和访问者IP)
+    const res = await fetch('https://wttr.in/?format=j1&lang=zh-cn')
+    if (res.ok) {
+      const data = await res.json()
+      const current = data.current_condition[0]
+      let condition = current.weatherDesc[0].value
+      if (current.lang_zh && current.lang_zh[0]) {
+          condition = current.lang_zh[0].value
+      }
       weather.value = {
-        temp: data.info.high.replace('°C', '') + '/' + data.info.low,
-        condition: data.info.type,
-        location: data.city || '本地'
+        temp: `${current.temp_C}°C`,
+        condition: condition,
+        location: '本地'
       }
       return
     }
-  } catch (e) { console.warn('VVHan weather failed', e) }
-
-  // 2. 尝试使用 oioweb (备用国内源)
-  try {
-    const res = await fetch('https://api.oioweb.cn/api/weather/weather')
-    const data = await res.json()
-    if (data.code === 200 && data.result) {
-      const w = data.result
-      weather.value = {
-        temp: `${w.current_temperature}°C`,
-        condition: w.weather || '晴',
-        location: w.city_name || '定位中'
-      }
-      return
-    }
-  } catch (e) { console.warn('OioWeb weather failed', e) }
-
-  // 3. 兜底1 - Wttr.in (国际源)
-  try {
-    const res = await fetch('https://wttr.in/?format=%l:+%c+%t')
-    const text = await res.text()
-    const parts = text.split(':')
-    if (parts.length >= 2) {
-      weather.value = {
-        temp: parts[1].trim(),
-        condition: '', 
-        location: parts[0].trim()
-      }
-      return
-    }
-  } catch (e) { console.warn('Wttr.in failed', e) }
-
-  // 4. 终极兜底 - Open-Meteo (需配合 IP 定位，这里简化为根据时区/默认坐标)
-  // 由于获取坐标可能也失败，这里用一个通用方案
-  try {
-     // 尝试通过 IP 获取经纬度 (ipapi.co 有限制，使用 ip-api.com)
-     const ipRes = await fetch('http://ip-api.com/json/')
-     const ipData = await ipRes.json()
-     if (ipData.status === 'success') {
-       const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${ipData.lat}&longitude=${ipData.lon}&current=temperature_2m,weather_code`)
-       const wData = await wRes.json()
-       const code = wData.current.weather_code
-       const temp = wData.current.temperature_2m + wData.current_units.temperature_2m
-       
-       // Weather code map simplify
-       let cond = '晴/多云'
-       if (code > 3) cond = '阴/雾'
-       if (code > 50) cond = '雨'
-       if (code > 70) cond = '雪'
-       
-       weather.value = {
-         temp: temp,
-         condition: cond,
-         location: ipData.city || ipData.regionName
-       }
-       return
-     }
+    throw new Error('Wttr.in failed')
   } catch (e) {
-    console.error('All weather sources failed', e)
-    weather.value = { temp: '--', condition: '离线', location: '未知' }
+    console.warn('Wttr.in fetch failed, switching to backup:', e)
+    
+    // 2. 降级尝试 vvhan (国内稳定源，仅提供高低温)
+    try {
+      const res = await fetch('https://api.vvhan.com/api/weather')
+      const data = await res.json()
+      if (data.success && data.info) {
+        weather.value = {
+          // 显示当前天气类型和最高温作为参考
+          temp: data.info.high.replace('°C', '') + '°C', 
+          condition: data.info.type,
+          location: data.city || '本地' 
+        }
+        return
+      }
+    } catch (err) {
+      console.error('All weather sources failed', err)
+      weather.value = { temp: '--', condition: '离线', location: '未知' }
+    }
   }
 }
 
@@ -504,6 +868,11 @@ const openEditModal = (sub) => { currentEdit.value = { ...sub }; isModalOpen.val
 const closeModal = () => { isModalOpen.value = false; currentEdit.value = null }
 
 const saveSubscription = async (formData) => {
+  if (!isServerOnline.value) {
+    alert('❌ 后台服务未连接，无法保存。请先启动服务器。')
+    return
+  }
+
   const token = localStorage.getItem('token')
   const method = currentEdit.value ? 'PUT' : 'POST'
   const url = currentEdit.value ? `/api/subscriptions/${currentEdit.value.id}` : '/api/subscriptions'
@@ -605,6 +974,8 @@ const debounceSearch = () => {
   clearTimeout(timeout)
   timeout = setTimeout(fetchSubscriptions, 300)
 }
+
+
 </script>
 
 <style scoped>
@@ -756,6 +1127,95 @@ const debounceSearch = () => {
 .content-header h2 { font-size: 24px; margin: 0 0 5px 0; color: var(--text-main); }
 .content-header p { margin: 0; color: var(--text-sub); font-size: 14px; }
 
+/* 统计仪表盘样式 */
+.stats-dashboard {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-icon {
+  font-size: 36px;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.stat-card.urgent .stat-icon { background: rgba(239, 68, 68, 0.15); }
+.stat-card.warning .stat-icon { background: rgba(245, 158, 11, 0.15); }
+.stat-card.money .stat-icon { background: rgba(34, 197, 94, 0.15); }
+.stat-card.total .stat-icon { background: rgba(99, 102, 241, 0.15); }
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.2;
+}
+
+.stat-card.urgent .stat-value { color: var(--color-danger); }
+.stat-card.warning .stat-value { color: var(--color-warning); }
+.stat-card.money .stat-value { color: var(--color-success); }
+.stat-card.total .stat-value { color: var(--color-primary); }
+
+.stat-label {
+  font-size: 13px;
+  color: var(--text-sub);
+  margin-top: 4px;
+}
+
+@media (max-width: 1024px) {
+  .stats-dashboard {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-dashboard {
+    grid-template-columns: 1fr;
+  }
+  
+  .stat-card {
+    padding: 15px;
+  }
+  
+  .stat-icon {
+    font-size: 28px;
+    width: 50px;
+    height: 50px;
+  }
+  
+  .stat-value {
+    font-size: 22px;
+  }
+}
+
 .toolbar {
   background: var(--bg-card);
   padding: 15px 20px;
@@ -803,6 +1263,39 @@ const debounceSearch = () => {
   border-radius: 6px;
   font-weight: 600;
   box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
+}
+
+/* 导入导出按钮 */
+.export-wrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-export, .btn-import {
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-export {
+  background: #10b981;
+  color: white;
+}
+
+.btn-export:hover {
+  background: #059669;
+}
+
+.btn-import {
+  background: #f59e0b;
+  color: white;
+}
+
+.btn-import:hover {
+  background: #d97706;
 }
 
 /* Table Styles */
@@ -1472,6 +1965,399 @@ const debounceSearch = () => {
   .card-actions .btn-act {
     padding: 6px 2px;
     font-size: 10px;
+  }
+}
+
+/* 页脚样式 */
+.dashboard-footer {
+  text-align: center;
+  padding: 20px;
+  margin-top: 30px;
+  border-top: 1px solid var(--border-color);
+  font-size: 13px;
+  color: var(--text-sub);
+}
+
+.dashboard-footer a {
+  color: var(--text-main);
+  text-decoration: none;
+}
+
+.dashboard-footer a:hover {
+  text-decoration: underline;
+}
+
+.dashboard-footer .separator {
+  margin: 0 10px;
+  opacity: 0.5;
+}
+
+/* ========== 日历视图样式 ========== */
+.calendar-view {
+  background: var(--bg-card);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.cal-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.cal-nav-btn {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cal-nav-btn:hover {
+  background: var(--bg-table-header);
+}
+
+.cal-today-btn {
+  background: var(--color-primary);
+  color: var(--text-inverse);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-left: auto;
+  transition: all 0.2s;
+}
+
+.cal-today-btn:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-weekday {
+  text-align: center;
+  padding: 10px;
+  font-weight: 600;
+  color: var(--text-sub);
+  font-size: 13px;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  min-height: 70px;
+  padding: 8px;
+  background: var(--bg-input);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.cal-day:hover {
+  background: var(--bg-table-header);
+  transform: scale(1.02);
+}
+
+.cal-day.other-month {
+  opacity: 0.4;
+}
+
+.cal-day.today {
+  background: var(--color-primary);
+  color: var(--text-inverse);
+  box-shadow: var(--shadow-md);
+}
+
+.cal-day.today .day-number {
+  color: var(--text-inverse);
+}
+
+.cal-day.has-expire {
+  border: 2px solid var(--color-warning);
+}
+
+.cal-day.has-urgent {
+  border: 2px solid var(--color-danger);
+}
+
+.cal-day.has-expired {
+  background: rgba(239, 68, 68, 0.1);
+  border: 2px solid var(--color-danger);
+}
+
+.day-number {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.day-dots {
+  display: flex;
+  gap: 3px;
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-success);
+}
+
+.dot-expired {
+  background: var(--color-danger);
+}
+
+.dot-urgent {
+  background: var(--color-warning);
+}
+
+.dot-warning {
+  background: #eab308; /* 黄色作为警告色保留或定义新变量，暂保留或用 warning */
+}
+
+.dot-more {
+  font-size: 10px;
+  color: var(--text-sub);
+}
+
+/* 日历详情面板 */
+.calendar-detail {
+  margin-top: 20px;
+  padding: 20px;
+  background: var(--bg-input);
+  border-radius: 8px;
+}
+
+.calendar-detail h4 {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  color: var(--text-main);
+}
+
+.calendar-detail.empty {
+  text-align: center;
+  color: var(--text-sub);
+}
+
+.calendar-detail.empty p {
+  margin: 0;
+}
+
+.detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.detail-item.expired {
+  border-color: var(--color-danger);
+  background: rgba(239, 68, 68, 0.05); /* 背景色保持半透明，使用 RGB 值较难通过变量直接替换，除非定义 RGB 变量 */
+}
+
+.detail-icon {
+  font-size: 20px;
+}
+
+.detail-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.detail-price {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.detail-status {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* 服务器离线警告 */
+.server-offline-alert {
+  background: var(--color-danger);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  box-shadow: var(--shadow-md);
+  animation: pulse-alert 2s infinite;
+}
+
+@keyframes pulse-alert {
+  0% { opacity: 1; }
+  50% { opacity: 0.85; }
+  100% { opacity: 1; }
+}
+
+
+.text-red { color: var(--color-danger); }
+.text-orange { color: var(--color-warning); }
+
+/* ========== 日历响应式布局 ========== */
+
+/* 平板适配 (768px - 1024px) */
+@media (max-width: 1024px) {
+  .calendar-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .cal-today-btn {
+    order: -1;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .cal-day {
+    min-height: 60px;
+  }
+}
+
+/* 手机适配 (< 768px) */
+@media (max-width: 768px) {
+  .calendar-view {
+    padding: 15px;
+    margin-top: 15px;
+    border-radius: var(--radius-md);
+  }
+  
+  .calendar-header {
+    margin-bottom: 15px;
+  }
+  
+  .cal-title {
+    font-size: 18px;
+  }
+  
+  .cal-nav-btn {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .cal-today-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    width: auto;
+    order: 0;
+  }
+  
+  .calendar-grid {
+    gap: 2px;
+  }
+  
+  .cal-weekday {
+    padding: 8px 4px;
+    font-size: 11px;
+  }
+  
+  .cal-day {
+    min-height: 45px;
+    padding: 4px;
+    border-radius: 6px;
+  }
+  
+  .day-number {
+    font-size: 12px;
+  }
+  
+  .day-dots {
+    gap: 2px;
+  }
+  
+  .dot {
+    width: 5px;
+    height: 5px;
+  }
+  
+  .dot-more {
+    font-size: 8px;
+  }
+  
+  .calendar-detail {
+    padding: 15px;
+    margin-top: 15px;
+  }
+  
+  .calendar-detail h4 {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  
+  .detail-item {
+    padding: 10px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .detail-icon {
+    font-size: 18px;
+  }
+  
+  .detail-name {
+    flex: none;
+    width: calc(100% - 30px);
+    font-size: 14px;
+  }
+  
+  .detail-price,
+  .detail-status {
+    font-size: 12px;
+  }
+}
+
+/* 超小屏幕适配 (< 480px) */
+@media (max-width: 480px) {
+  .cal-day {
+    min-height: 38px;
+    padding: 3px;
+  }
+  
+  .day-number {
+    font-size: 11px;
+  }
+  
+  .dot {
+    width: 4px;
+    height: 4px;
   }
 }
 </style>

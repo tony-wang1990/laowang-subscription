@@ -5,6 +5,7 @@ const { sendTelegramMessage } = require('../services/telegram');
 const { sendBarkNotification } = require('../services/bark');
 const { sendWebhookNotification } = require('../services/webhook');
 const { sendWechatNotification } = require('../services/wechat');
+const { sendEmailNotification } = require('../services/email');
 
 let cronTask = null;
 
@@ -41,39 +42,49 @@ const scheduleCron = (expression) => {
     });
 };
 
-// 检查订阅到期
+// 检查订阅到期（使用配置的时区）
 const checkSubscriptions = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // 首先获取时区设置
+    db.get('SELECT value FROM settings WHERE key = "timezone"', [], (err, row) => {
+        const timezone = row?.value || 'Asia/Shanghai';
 
-    db.all('SELECT * FROM subscriptions WHERE status = "active"', [], async (err, rows) => {
-        if (err) {
-            console.error('Cron DB error:', err);
-            return;
-        }
+        // 使用配置的时区获取今天的日期
+        const now = new Date();
+        const todayStr = now.toLocaleDateString('en-CA', { timeZone: timezone }); // YYYY-MM-DD 格式
+        const today = new Date(todayStr);
+        today.setHours(0, 0, 0, 0);
 
-        for (const sub of rows) {
-            const expireDate = new Date(sub.expire_date);
-            expireDate.setHours(0, 0, 0, 0);
+        console.log(`[Checker] Running with timezone: ${timezone}, today: ${todayStr}`);
 
-            const diffTime = expireDate - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            // 检查是否匹配提醒天数
-            if (diffDays === sub.remind_days) {
-                await sendNotification(sub, diffDays);
+        db.all('SELECT * FROM subscriptions WHERE status = "active"', [], async (err, rows) => {
+            if (err) {
+                console.error('Cron DB error:', err);
+                return;
             }
 
-            // 到期当天也提醒（如果提醒天数不是0）
-            if (diffDays === 0 && sub.remind_days !== 0) {
-                await sendNotification(sub, 0);
-            }
+            for (const sub of rows) {
+                const expireDate = new Date(sub.expire_date);
+                expireDate.setHours(0, 0, 0, 0);
 
-            // 已过期提醒（过期1-3天内每天发一次）
-            if (diffDays < 0 && diffDays >= -3) {
-                await sendNotification(sub, diffDays);
+                const diffTime = expireDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                // 检查是否匹配提醒天数
+                if (diffDays === sub.remind_days) {
+                    await sendNotification(sub, diffDays);
+                }
+
+                // 到期当天也提醒（如果提醒天数不是0）
+                if (diffDays === 0 && sub.remind_days !== 0) {
+                    await sendNotification(sub, 0);
+                }
+
+                // 已过期提醒（过期1-3天内每天发一次）
+                if (diffDays < 0 && diffDays >= -3) {
+                    await sendNotification(sub, diffDays);
+                }
             }
-        }
+        });
     });
 };
 
@@ -226,6 +237,27 @@ ${urgencyEmoji} **订阅到期提醒**
                     sendWechatNotification(wechatKey, message)
                         .then(() => console.log(`✅ WeChat notification sent for ${sub.name}`))
                         .catch(e => console.error(`❌ WeChat failed for ${sub.name}: `, e.message))
+                );
+            }
+        }
+
+        // 邮件通知
+        if (settings['enable_email'] === 'true') {
+            const emailTo = settings['email_to'];
+            const emailConfig = {
+                host: settings['email_host'],
+                port: parseInt(settings['email_port']) || 465,
+                secure: settings['email_secure'] !== 'false',
+                user: settings['email_user'],
+                pass: settings['email_pass']
+            };
+
+            if (emailConfig.host && emailConfig.user && emailConfig.pass && emailTo) {
+                const subject = `${urgencyEmoji} 订阅提醒: ${sub.name} ${statusText}`;
+                promises.push(
+                    sendEmailNotification(emailConfig, emailTo, subject, message)
+                        .then(() => console.log(`✅ Email notification sent for ${sub.name}`))
+                        .catch(e => console.error(`❌ Email failed for ${sub.name}: `, e.message))
                 );
             }
         }

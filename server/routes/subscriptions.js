@@ -135,4 +135,123 @@ router.post('/:id/test', async (req, res) => {
     }
 });
 
+// ========== 数据导入导出 ==========
+
+// 导出所有订阅 (JSON)
+router.get('/export/json', (req, res) => {
+    db.all('SELECT * FROM subscriptions WHERE user_id = ?', [req.userId], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        const exportData = {
+            version: '1.5.0',
+            exportDate: new Date().toISOString(),
+            count: rows.length,
+            subscriptions: rows.map(row => ({
+                name: row.name,
+                category: row.category,
+                expire_date: row.expire_date,
+                remind_days: row.remind_days,
+                cycle_value: row.cycle_value,
+                cycle_unit: row.cycle_unit,
+                price: row.price,
+                currency: row.currency,
+                auto_renew: row.auto_renew,
+                status: row.status,
+                notes: row.notes || row.note
+            }))
+        };
+
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename=laowang-subscriptions-${new Date().toISOString().split('T')[0]}.json`);
+        res.json(exportData);
+    });
+});
+
+// 导出为 CSV
+router.get('/export/csv', (req, res) => {
+    db.all('SELECT * FROM subscriptions WHERE user_id = ?', [req.userId], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        const headers = ['名称', '分类', '到期日期', '提醒天数', '周期值', '周期单位', '价格', '货币', '自动续费', '状态', '备注'];
+        const csvRows = [headers.join(',')];
+
+        rows.forEach(row => {
+            const values = [
+                `"${(row.name || '').replace(/"/g, '""')}"`,
+                `"${(row.category || '').replace(/"/g, '""')}"`,
+                row.expire_date,
+                row.remind_days,
+                row.cycle_value || '',
+                row.cycle_unit || '',
+                row.price || '',
+                row.currency || 'CNY',
+                row.auto_renew ? '是' : '否',
+                row.status === 'active' ? '启用' : '停用',
+                `"${((row.notes || row.note || '')).replace(/"/g, '""')}"`
+            ];
+            csvRows.push(values.join(','));
+        });
+
+        // 添加 BOM 以支持 Excel 中文
+        const bom = '\uFEFF';
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename=laowang-subscriptions-${new Date().toISOString().split('T')[0]}.csv`);
+        res.send(bom + csvRows.join('\n'));
+    });
+});
+
+// 导入订阅 (JSON)
+router.post('/import/json', (req, res) => {
+    const { subscriptions } = req.body;
+
+    if (!subscriptions || !Array.isArray(subscriptions)) {
+        return res.status(400).json({ error: '无效的导入数据格式' });
+    }
+
+    let imported = 0;
+    let failed = 0;
+
+    const stmt = db.prepare(`
+        INSERT INTO subscriptions (
+            user_id, name, category, expire_date, remind_days,
+            cycle_value, cycle_unit, price, currency, auto_renew, status, notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    subscriptions.forEach(sub => {
+        if (!sub.name || !sub.expire_date) {
+            failed++;
+            return;
+        }
+
+        stmt.run(
+            req.userId,
+            sub.name,
+            sub.category || '其他',
+            sub.expire_date,
+            sub.remind_days || 3,
+            sub.cycle_value || 1,
+            sub.cycle_unit || 'month',
+            sub.price || null,
+            sub.currency || 'CNY',
+            sub.auto_renew ? 1 : 0,
+            sub.status || 'active',
+            sub.notes || sub.note || null,
+            (err) => {
+                if (err) failed++;
+                else imported++;
+            }
+        );
+    });
+
+    stmt.finalize(() => {
+        res.json({
+            success: true,
+            message: `导入完成：成功 ${imported} 条，失败 ${failed} 条`,
+            imported,
+            failed
+        });
+    });
+});
+
 module.exports = router;

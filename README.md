@@ -1,124 +1,77 @@
-# 老王订阅管理系统 (LaoWang Subscription) v1.2
+# 🐻 老王订阅管理系统 (LaoWang Subscription)
 
-> **一个用于管理续费、到期提醒的私有化部署工具**
+> **专为个人打造的订阅费用与到期管理神器**
+>
+> 告别 Excel，用最优雅的方式管理你的 Netflix、Spotify、域名、服务器VPS等周期性支出。只有真正的后端服务，才能提供真正的到期推送提醒！
 
-你是否经常遇到以下问题？
-- ❌ 域名悄悄到期，网站打不开才发现。
-- ❌ 忘记取消试用的 Netflix/Spotify 会员，白白扣费。
-- ❌ VPS 服务器太多，记不清哪台机器什么时候到期。
-- ❌ 信用卡办太多，错过了免息还款日。
+[![Version](https://img.shields.io/badge/version-v1.5.0-blue?style=flat-square)](https://github.com/tony-wang1990/laowang-subscription)
+[![Docker Support](https://img.shields.io/badge/docker-arm64%20%2F%20amd64-green?style=flat-square)](https://hub.docker.com/)
+[![License](https://img.shields.io/badge/license-MIT-orange?style=flat-square)](LICENSE)
 
-**LaoWang Subscription** 就是为了解决这些问题而生的。它是一个基于 Vue 3 + Express 的全栈订阅管理系统，不仅仅是一张简单的Excel表格，它拥有**真正的后端检测能力**，能通过微信、Telegram 等渠道精准地提醒你"该交保护费了"！
+## ✨ 核心亮点
 
-<p align="center">
-  <a href="https://test.199060.xyz/" target="_blank">
-    <img src="https://img.shields.io/badge/🔗_在线演示-test.199060.xyz-blue?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Demo">
-  </a>
-</p>
+### 🎨 极致的视觉体验
+
+- **双视图切换**：[≡ 列表模式] 高效扫视 / [⊞ 卡片模式] 沉浸浏览。
+- **📅 日历视图 (v1.5)**：月历形式直观展示每一天的付款计划。
+- **PWA 支持**：可添加至手机桌面，像原生 App 一样流畅使用。
+
+### 🤖 强大的自动化能力
+
+- **📢 全渠道推送**：支持 Telegram、微信(企业微信)、Bark(iOS)、Email 邮件通知。
+- **⏰ 精准提醒**：支持「提前N天」、「当天」、「过期后」多阶段提醒，绝不错过续费日。
+- **💰 智能统计**：自动汇率转换，实时计算「本月待付」和「年度总支出」。
+- **🛡️ 状态监测**：实时检测后台健康状态，断网即报警，防丢失。
+
+### 🛠️ 深度本地化
+
+- **农历支持**：符合国人习惯的日期显示。
+- **自动天气**：根据 IP 自动显示当地天气。
 
 ---
 
 ## 📸 界面预览
 
-### 列表视图 (少女主题)
-![列表视图](docs/images/dashboard_light.png)
-
-### 卡片视图 (卡通主题)
-![卡片视图](docs/images/dashboard_dark.png)
+| ☀️ 浅色主题 (Light) | 🌙 深色主题 (Dark) |
+| :---: | :---: |
+| ![Light](docs/images/dashboard_light.png) | ![Dark](docs/images/dashboard_dark.png) |
 
 ---
 
-## ✨ 核心功能
+## 🏗️ 部署指南 (Deployment)
 
-### 1. 📅 精准的订阅周期管理
-- **周期支持**：年付、月付、日滚、一次性
-- **自动续费**：到期后自动延长周期，无需手动修改
+本项目基于 **Node.js + SQLite** 开发，依赖持久化存储（Database）和常驻进程（Cron Job），因此**最推荐使用 Docker 部署**。
 
-### 2. 📢 多渠道即时通知
-- **Telegram Bot**：即时消息推送
-- **WeChat (企业微信)**：国内最稳的推送通道
-- **Bark (iOS)**：苹果用户神器
-- **Webhook**：自定义接入
+### ✅ 支持平台
 
-### 3. 💰 资产与费用统计
-- **多币种支持**：CNY, USD, HKD, JPY, EUR 等
-- **续费价格显示**：一眼看清每个订阅的续费成本
+- **VPS / 云服务器**：完全支持 (Ubuntu, Debian, CentOS 等)
+- **架构支持**：**AMD64 (x86)** 和 **ARM64** (如 Oracle 甲骨文 ARM、树莓派) 均完美运行。
 
-### 4. 🎨 多彩主题系统 (v1.3 新增)
-- 🚀 **太空** - 深邃星空紫
-- 💫 **霓虹** - 炫彩红黄
-- 🍬 **糖果** - 柔和彩虹
-- 🌸 **少女** - 粉嫩梦幻
-- 🤖 **科幻** - 青紫赛博
-- 🎨 **卡通** - 欢乐多彩
+### ❌ 不支持平台
 
-### 5. 🔄 双视图切换 (v1.2 新增)
-- **≡ 列表视图**：传统表格布局
-- **⊞ 卡片视图**：现代网格布局
+- **Cloudflare Workers / Pages**：不支持 (无持久化文件系统)
+- **Vercel / Netlify**：不支持 (Serverless 无法运行持久化 Cron 任务)
 
 ---
 
-## 🚀 更新日志
+### 🚀 方式一：Docker 一键部署 (推荐)
 
-### v1.2 (Latest)
-
-> **亮点**：全新多彩主题 + 双视图切换 + 固定头部 + 多项BUG修复
-
-#### 🆕 新功能
-- **8 款多彩主题**：太空、霓虹、糖果、少女、海洋、科幻、卡通 + 深浅色
-- **卡片视图**：≡ 列表 / ⊞ 卡片 一键切换
-- **固定头部和工具栏**：滚动时仅内容区域滚动，头部保持可见
-- **三端响应式适配**：桌面(4列)、平板(2列)、手机(单列)完美显示
-
-#### 🔧 UI 优化
-- "价格" 改为 "续费价格"
-- 价格格式改为 `10 USD` 样式
-- 卡片统一高度和一致对齐
-- 移除导航栏"列表"按钮（修复抖动BUG）
-- 视图切换图标改为 ≡ 和 ⊞
-
-#### 🐛 Bug 修复
-- **修复删除按钮无响应**：移除被浏览器阻止的 confirm 弹窗
-- **修复停用/启用页面跳动**：直接更新本地状态，不重新加载列表
-- **修复弹窗点击外部关闭**：弹窗仅能通过按钮关闭
-- **修复卡片文字不对齐**：左侧标签左对齐，右侧数值右对齐
-
----
-
-### v1.1
-
-> **重要**：从 v1.0 升级的用户，系统会自动迁移数据库。
-
-- 🆕 **新增字段**：周期、价格、货币、自动续费、备注
-- 🆕 **功能增强**：自动续费逻辑、农历显示开关、天气源优化
-- 🐛 **Bug修复**：数据库缺字段启动崩溃、日期显示重复
-
----
-
-### v1.0
-
-- 🎉 **首次发布**
-- 基础订阅管理功能
-- 多渠道通知支持
-- Docker 一键部署
-
----
-
-## 🚀 部署指南 (推荐 Docker)
-
-### 方式一：Docker Run (最快)
+直接复制以下命令到服务器终端即可：
 
 ```bash
 docker run -d \
   --name laowang-subscription \
-  -p 8080:8080 \
+  -p 3001:3001 \
   --restart always \
   -v $(pwd)/database:/app/database \
   -e TZ=Asia/Shanghai \
+  -e PORT=3001 \
   ghcr.io/tony-wang1990/laowang-subscription:main
 ```
 
-### 方式二：Docker Compose (推荐)
+> **注意**：v1.5.0 版本默认端口为 **3001**。
+
+### 📂 方式二：Docker Compose (高级)
 
 创建 `docker-compose.yml`：
 
@@ -130,44 +83,67 @@ services:
     container_name: laowang-subscription
     restart: always
     ports:
-      - "8080:8080"
+      - "3001:3001"
     volumes:
-      - ./database:/app/database
+      - ./database:/app/database # 数据持久化挂载
     environment:
-      - TZ=Asia/Shanghai
+      - TZ=Asia/Shanghai         # 时区设置（影响提醒时间）
+      - PORT=3001                # 端口配置
 ```
 
-启动：
+然后运行：
+
 ```bash
 docker-compose up -d
 ```
 
-### 🔄 如何自动更新？
-推荐使用 **Watchtower** 实现全自动更新：
+### 💻 方式三：本地开发/手动部署
+
+需 Node.js >= 18：
+
 ```bash
-docker run -d \
-    --name watchtower \
-    --restart always \
-    -v /var/run/docker.sock:/var/run/docker.sock \
-    containrrr/watchtower \
-    --cleanup \
-    --interval 3600 \
-    laowang-subscription
+# 1. 安装依赖
+npm install
+
+# 2. 启动服务 (同时启动前端和后端)
+npm run dev
+
+# 访问 http://localhost:5173 (开发模式) 或 http://localhost:3001 (生产模式)
 ```
 
-> ⚠️ **关于其他容器平台**：由于本项目使用 SQLite 原生模块，Zeabur、Railway、Vercel 等 Serverless 平台可能出现编译失败或运行时崩溃的问题，**推荐使用 Docker 部署**。
+---
+
+## ⚙️ 环境变量配置
+
+| 变量名 | 必填 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `PORT` | 否 | 3001 | 服务监听端口 |
+| `TZ` | 否 | UTC | 系统时区，**强烈建议设置为 Asia/Shanghai** 以保证提醒时间准确 |
+| `JWT_SECRET` | 否 | 随机 | 用于加密 Session，建议生产环境固定一个长字符串 |
 
 ---
 
-## ⚙️ 环境变量
-| 变量名 | 默认值 | 说明 |
-| :--- | :--- | :--- |
-| `PORT` | 8080 | 服务端口 |
-| `JWT_SECRET` | 随机 | Session密钥 |
-| `TZ` | UTC | 时区 (建议设置 Asia/Shanghai) |
+## 🔄 如何更新？
+
+使用了 Docker 的用户，推荐使用 Watchtower 自动更新，或者手动执行：
+
+```bash
+docker pull ghcr.io/tony-wang1990/laowang-subscription:main
+docker stop laowang-subscription
+docker rm laowang-subscription
+# ...重新运行上面的 docker run 命令
+```
 
 ---
 
-## 🤝 贡献与支持
-觉得好用请点个 ⭐️ Star！有问题欢迎提 Issue。
-License: MIT
+## 📝 常见问题 (FAQ)
+
+**Q: 为什么 Cloudflare 不能用？**
+A: 本项目使用 SQLite 数据库存储您的隐私数据，Cloudflare 等 Serverless 平台在重启后会清空文件，导致数据丢失；且无法维持定时任务（发通知）。请使用几十块钱一年的 VPS 部署，数据更安全。
+
+**Q: 点击保存没反应？**
+A: 检查页面顶部是否有红色“离线”警告。如果有，请检查容器日志。v1.5.0 之后端口改为 3001，请确保您的防火墙放行了 3001 端口。
+
+---
+
+Copyright © 2024-2025 LaoWang. MIT License.

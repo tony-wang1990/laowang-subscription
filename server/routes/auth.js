@@ -49,4 +49,40 @@ router.post('/register', (req, res) => {
     });
 });
 
+// Change Password (需要认证)
+router.post('/change-password', (req, res) => {
+    const token = req.headers['authorization']?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'No token provided' });
+
+    jwt.verify(token, SECRET_KEY, (err, decoded) => {
+        if (err) return res.status(401).json({ error: 'Invalid token' });
+
+        const { currentPassword, newPassword } = req.body;
+
+        if (!newPassword || newPassword.length < 4) {
+            return res.status(400).json({ error: '新密码至少需要4个字符' });
+        }
+
+        db.get('SELECT * FROM users WHERE id = ?', [decoded.id], (err, user) => {
+            if (err) return res.status(500).json({ error: 'Database error' });
+            if (!user) return res.status(404).json({ error: 'User not found' });
+
+            // 如果提供了当前密码，验证它
+            if (currentPassword) {
+                const isValid = bcrypt.compareSync(currentPassword, user.password);
+                if (!isValid) {
+                    return res.status(401).json({ error: '当前密码错误' });
+                }
+            }
+
+            // 更新密码
+            const hashedPassword = bcrypt.hashSync(newPassword, 10);
+            db.run('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, decoded.id], function (err) {
+                if (err) return res.status(500).json({ error: 'Failed to update password' });
+                res.json({ success: true, message: '密码修改成功' });
+            });
+        });
+    });
+});
+
 module.exports = router;

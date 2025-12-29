@@ -76,6 +76,7 @@
               <label class="channel-item"><input type="checkbox" v-model="config.enable_bark"> Bark (iOS)</label>
               <label class="channel-item"><input type="checkbox" v-model="config.enable_webhook"> Webhook 通知</label>
               <label class="channel-item"><input type="checkbox" v-model="config.enable_wechat"> 企业微信机器人</label>
+              <label class="channel-item"><input type="checkbox" v-model="config.enable_email"> 📧 邮件通知</label>
             </div>
           </div>
           
@@ -156,6 +157,44 @@
         </div>
       </section>
 
+      <!-- 邮件通知 -->
+      <section class="config-card highlight-border" v-if="config.enable_email">
+        <div class="card-title">📧 邮件通知配置 (SMTP)</div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>SMTP 服务器</label>
+              <input v-model="config.email_host" type="text" placeholder="smtp.qq.com">
+              <p class="help-text">QQ邮箱: smtp.qq.com / Gmail: smtp.gmail.com</p>
+            </div>
+            <div class="form-group">
+              <label>SMTP 端口</label>
+              <input v-model="config.email_port" type="text" placeholder="465">
+              <p class="help-text">SSL: 465 / TLS: 587</p>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>发件人邮箱</label>
+              <input v-model="config.email_user" type="text" placeholder="your@qq.com">
+            </div>
+            <div class="form-group">
+              <label>邮箱密码/授权码</label>
+              <input v-model="config.email_pass" type="password" placeholder="QQ邮箱需使用授权码">
+              <p class="help-text">QQ邮箱需在设置中开启 SMTP 并生成授权码</p>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>收件人邮箱</label>
+            <input v-model="config.email_to" type="text" placeholder="receiver@example.com">
+            <p class="help-text">接收通知的邮箱地址</p>
+          </div>
+          <div class="action-row">
+             <button class="btn-test" @click="testChannel('email')">🚀 测试邮件通知</button>
+          </div>
+        </div>
+      </section>
+
       <!-- Bottom Actions -->
       <div class="page-actions">
         <button class="btn-save-all" @click="saveAll">💾 保存所有配置</button>
@@ -180,13 +219,20 @@ const config = reactive({
   enable_bark: false,
   enable_webhook: false,
   enable_wechat: false,
+  enable_email: false,
   // Configs
   api_token: '',
   telegram_token: '',
   telegram_chat_id: '',
   bark_url: '',
   webhook_url: '',
-  wechat_key: ''
+  wechat_key: '',
+  // Email Configs
+  email_host: '',
+  email_port: '465',
+  email_user: '',
+  email_pass: '',
+  email_to: ''
 })
 
 onMounted(async () => {
@@ -248,12 +294,33 @@ const saveAll = async () => {
   }
 }
 
-const updateAccount = () => {
+const updateAccount = async () => {
   if (!account.password) {
     alert('请输入新密码')
     return
   }
-  alert('密码修改功能开发中 (演示环境保护)')
+  
+  const token = localStorage.getItem('token')
+  try {
+    const res = await fetch('/api/auth/change-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ newPassword: account.password })
+    })
+    
+    const data = await res.json()
+    if (res.ok) {
+      alert('✅ 密码修改成功！')
+      account.password = ''
+    } else {
+      alert('❌ 密码修改失败: ' + (data.error || '未知错误'))
+    }
+  } catch (e) {
+    alert('❌ 网络错误: ' + e.message)
+  }
 }
 
 const testChannel = async (channel) => {
@@ -283,6 +350,19 @@ const testChannel = async (channel) => {
         if (!config.wechat_key) return alert('请先填写企业微信 Webhook Key')
         url = '/api/settings/test-wechat'
         body = { wechatKey: config.wechat_key }
+        break
+      case 'email':
+        if (!config.email_host || !config.email_user || !config.email_pass || !config.email_to) {
+          return alert('请先完整填写邮件配置')
+        }
+        url = '/api/settings/test-email'
+        body = {
+          emailHost: config.email_host,
+          emailPort: config.email_port,
+          emailUser: config.email_user,
+          emailPass: config.email_pass,
+          emailTo: config.email_to
+        }
         break
       default:
         alert(`${channel} 测试功能开发中`)
