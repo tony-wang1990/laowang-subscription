@@ -79,7 +79,7 @@ const checkSubscriptions = () => {
                     await sendNotification(sub, diffDays);
                 }
 
-                // 鍒版湡褰撳ぉ涔熸彁閱掞紙濡傛灉鎻愰啋澶╂暟涓嶆槸0锛?
+                // 到期褰撳ぉ涔熸彁閱掞紙濡傛灉鎻愰啋澶╂暟涓嶆槸0锛?
                 if (diffDays === 0 && sub.remind_days !== 0) {
                     await sendNotification(sub, 0);
                 }
@@ -113,7 +113,7 @@ const checkAutoRenew = () => {
             const expireDate = new Date(sub.expire_date);
             expireDate.setHours(0, 0, 0, 0);
 
-            // 濡傛灉宸茶繃鏈熸垨浠婂ぉ鍒版湡
+            // 濡傛灉宸茶繃鏈熸垨浠婂ぉ到期
             if (expireDate <= today) {
                 // 璁＄畻鏂扮殑杩囨湡鏃堕棿
                 let newDate = new Date(expireDate);
@@ -159,13 +159,14 @@ const sendNotification = async (sub, daysLeft) => {
         const urgencyEmoji = daysLeft <= 0 ? '馃毃' : (daysLeft <= 3 ? '鈿狅笍' : '馃摙');
 
         let message = `
-${urgencyEmoji} **璁㈤槄鍒版湡鎻愰啋**
+${urgencyEmoji} **订阅到期提醒**
 
-馃摝 **鍚嶇О**: ${sub.name}
-馃彿锔?**绫诲瀷**: ${sub.category || '鏃?}
-馃搮 **鍒版湡**: ${sub.expire_date}
-鈴?**鐘舵€?*: ${statusText}
-馃摑 **澶囨敞**: ${sub.notes || '鏃?}
+ **用户**: ${sub.username || 'Unknown'}
+: ${sub.name}
+**类型**: ${sub.category || '无}
+ **到期**: ${sub.expire_date}
+**鐘舵€?*: ${statusText}
+ **备注**: ${sub.notes || '无}
 `;
 
         // 濡傛灉寮€鍚簡鍐滃巻鏄剧ず
@@ -206,7 +207,7 @@ ${urgencyEmoji} **璁㈤槄鍒版湡鎻愰啋**
             const barkUrl = settings['bark_url'];
             if (barkUrl) {
                 const title = `${urgencyEmoji} ${sub.name} ${statusText} `;
-                const body = `绫诲瀷: ${sub.category || '鏃?} | 鍒版湡: ${sub.expire_date} `;
+                const body = `类型: ${sub.category || '无} | 到期: ${sub.expire_date} `;
                 promises.push(
                     sendBarkNotification(barkUrl, title, body)
                         .then(() => console.log(`鉁?Bark notification sent for ${sub.name}`))
