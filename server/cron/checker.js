@@ -155,7 +155,7 @@ const sendNotification = async (sub, daysLeft) => {
         rows.forEach(row => settings[row.key] = row.value);
 
         // 鏋勫缓閫氱煡娑堟伅
-        const statusText = daysLeft < 0 ? `宸茶繃鏈?${Math.abs(daysLeft)} 澶ー : `鍓╀綑 ${daysLeft} 澶ー;
+        const statusText = daysLeft < 0 ? `已过期${Math.abs(daysLeft)} 澶ー : `鍓╀綑 ${daysLeft} 澶ー;
         const urgencyEmoji = daysLeft <= 0 ? '馃毃' : (daysLeft <= 3 ? '鈿狅笍' : '馃摙');
 
         let message = `
