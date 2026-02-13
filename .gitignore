@@ -1,6 +1,8 @@
 node_modules/
 .env
 database/*.db
+*.db
 dist/
 .DS_Store
 *.log
+test_output.txt

@@ -182,10 +182,15 @@ function createSampleData() {
                 }
             ];
 
-            const stmt = db.prepare('INSERT INTO subscriptions (user_id, name, category, expire_date, cycle, price, currency, auto_renew, remind_days, status, note) VALUES ((SELECT id FROM users LIMIT 1), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+            const stmt = db.prepare('INSERT INTO subscriptions (user_id, name, category, expire_date, cycle_unit, cycle_value, remind_days, status, notes) VALUES ((SELECT id FROM users LIMIT 1), ?, ?, ?, ?, ?, ?, ?, ?)');
 
             samples.forEach(s => {
-                stmt.run(s.name, s.category, s.expire_date, s.cycle, s.price, s.currency, s.auto_renew, s.remind_days, s.status, s.note);
+                // Map old fields to new schema
+                // cycle -> cycle_unit (approx), price/currency/auto_renew removed in schema
+                // note -> notes
+                const cycleUnit = s.cycle === 'month' ? 'month' : (s.cycle === 'year' ? 'year' : 'day');
+                const cycleValue = 1;
+                stmt.run(s.name, s.category, s.expire_date, cycleUnit, cycleValue, s.remind_days, s.status, s.note);
             });
             stmt.finalize();
             console.log('Sample data created.');

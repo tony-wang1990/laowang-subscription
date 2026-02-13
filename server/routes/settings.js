@@ -1,20 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const jwt = require('jsonwebtoken');
 
-// Middleware to check auth (reuse from index or centralize, for now assumes index passes it or we re-implement)
-// Note: In index.js we didn't globally apply auth to all routes with a single middleware, 
-// we applied it per route file or in index.js. 
-// Let's look at index.js: app.use('/api/subscriptions', subscriptionRoutes);
-// And subscriptionRoutes has `router.use(authenticate)`.
-// So we should do the same here.
-
+// Middleware to check auth
 const authenticate = (req, res, next) => {
     const token = req.headers['authorization']?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
-    const jwt = require('jsonwebtoken');
-    const SECRET_KEY = process.env.JWT_SECRET || 'laowang-secret-key';
+    const { JWT_SECRET: SECRET_KEY } = require('../config');
 
     jwt.verify(token, SECRET_KEY, (err, decoded) => {
         if (err) return res.status(401).json({ error: 'Invalid token' });
@@ -173,7 +167,18 @@ router.post('/trigger-renew', (req, res) => {
     res.json({ success: true, message: 'Auto-renew check triggered' });
 });
 
-module.exports = router;
+// Backup Database
+router.get('/backup', (req, res) => {
+    const path = require('path');
+    const dbPath = path.resolve(__dirname, '../../database/subscription.db');
+    res.download(dbPath, 'subscription_backup.db', (err) => {
+        if (err) {
+            console.error('Download error:', err);
+            if (!res.headersSent) {
+                res.status(500).json({ error: 'Backup failed' });
+            }
+        }
+    });
+});
 
-// ========== 外部触发 API（不需要 JWT 认证，使用 API Token） ==========
-// 这个路由需要在 index.js 中单独注册
+module.exports = router;

@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const jwt = require('jsonwebtoken');
 
 // Middleware to check auth
 const authenticate = (req, res, next) => {
     const token = req.headers['authorization']?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
-    const jwt = require('jsonwebtoken');
-    const SECRET_KEY = process.env.JWT_SECRET || 'laowang-secret-key';
+    const { JWT_SECRET: SECRET_KEY } = require('../config');
 
     jwt.verify(token, SECRET_KEY, (err, decoded) => {
         if (err) return res.status(401).json({ error: 'Invalid token' });

@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../db');
 
-const SECRET_KEY = process.env.JWT_SECRET || 'laowang-secret-key';
+const { JWT_SECRET: SECRET_KEY } = require('../config');
 
 // Login
 router.post('/login', (req, res) => {
