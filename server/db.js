@@ -2,6 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 // 确保 database 目录存在
 // 数据库目录策略：
@@ -82,35 +83,49 @@ function checkAndMigrate() {
     });
 }
 
-// 创建默认管理员用户
+// 首次启动：用户表为空时创建一个管理员账号，口令为随机强口令，
+// 仅在启动日志中打印一次。请立即登录并修改密码，妥善保管该口令。
+// 注意：此处绝不使用任何默认/固定口令。
 function createDefaultUser() {
     const defaultUsername = 'admin';
-    const defaultPassword = 'admin';
 
-    db.get('SELECT id FROM users WHERE username = ?', [defaultUsername], (err, row) => {
+    db.get('SELECT count(*) as count FROM users', [], (err, row) => {
         if (err) {
-            console.error('Error checking default user:', err.message);
+            console.error('Error checking users:', err.message);
             return;
         }
 
-        if (!row) {
-            const hashedPassword = bcrypt.hashSync(defaultPassword, 10);
+        if (row.count === 0) {
+            // 24 字符随机口令（约 144 位熵），只生成一次、只打印一次
+            const generatedPassword = crypto.randomBytes(18).toString('base64url');
+            const hashedPassword = bcrypt.hashSync(generatedPassword, 10);
             db.run('INSERT INTO users (username, password) VALUES (?, ?)',
                 [defaultUsername, hashedPassword],
                 (insertErr) => {
                     if (insertErr) {
                         console.error('Error creating default user:', insertErr.message);
                     } else {
-                        console.log('Default admin user created (admin/admin)');
-                        createSampleData(); // 创建完用户后检查是否需要创建演示数据
+                        console.log('================================================================');
+                        console.log('首次启动：已创建管理员账号 admin，随机初始口令如下（仅显示一次）：');
+                        console.log(`  ${generatedPassword}`);
+                        console.log('请立即登录并修改密码，不要把该口令写入任何文件或分享给他人。');
+                        console.log('================================================================');
+                        maybeCreateSampleData();
                     }
                 }
             );
         } else {
-            console.log('Default admin user already exists.');
-            createSampleData(); // 用户存在也要检查数据，防止空表
+            maybeCreateSampleData();
         }
     });
+}
+
+// 演示数据默认关闭，仅在显式设置 DEMO_DATA=1 时灌入
+function maybeCreateSampleData() {
+    if (process.env.DEMO_DATA !== '1') {
+        return;
+    }
+    createSampleData();
 }
 
 // 创建演示数据

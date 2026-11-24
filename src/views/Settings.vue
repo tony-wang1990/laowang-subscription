@@ -21,9 +21,14 @@
               <input v-model="account.username" type="text" disabled>
             </div>
             <div class="form-group">
-              <label>密码</label>
+              <label>当前密码</label>
+              <input v-model="account.currentPassword" type="password" placeholder="修改密码时必填">
+              <p class="help-text">改密需验证当前密码</p>
+            </div>
+            <div class="form-group">
+              <label>新密码</label>
               <input v-model="account.password" type="password" placeholder="如不修改密码，请留空">
-              <p class="help-text">留空表示不修改当前密码</p>
+              <p class="help-text">留空表示不修改当前密码；新密码至少 8 位</p>
             </div>
           </div>
           <div class="action-row">
@@ -209,7 +214,12 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const account = reactive({ username: '', password: '' })
+const account = reactive({ username: '', currentPassword: '', password: '' })
+
+// 敏感字段：后端 GET 只返回 { configured }，前端不回填原值；
+// 保存时空值 + 已配置 = 未改动，不提交，避免清空已有密钥
+const SENSITIVE_KEYS = ['api_token', 'telegram_token', 'bark_url', 'webhook_url', 'wechat_key', 'email_pass']
+const secretConfigured = reactive({})
 const config = reactive({
   show_lunar: false,
   timezone: 'Asia/Shanghai',
@@ -251,6 +261,11 @@ const fetchSettings = async () => {
       const data = await res.json()
       // Convert string booleans to real booleans if needed, though updated DB handles strings
       for (const key in data) {
+         // 敏感字段后端只返回 { configured }，不回填原值，只记录是否已配置
+         if (data[key] && typeof data[key] === 'object' && 'configured' in data[key]) {
+            secretConfigured[key] = data[key].configured
+            continue
+         }
          if (key.startsWith('enable_') || key === 'show_lunar') {
             config[key] = data[key] === 'true'
          } else {
@@ -270,6 +285,12 @@ const saveAll = async () => {
   for (const key in payload) {
     if (typeof payload[key] === 'boolean') {
       payload[key] = String(payload[key])
+    }
+  }
+  // 敏感字段留空且此前已配置 = 未改动，不提交（否则会清空已有密钥）
+  for (const key of SENSITIVE_KEYS) {
+    if (secretConfigured[key] && !payload[key]) {
+      delete payload[key]
     }
   }
   
@@ -299,7 +320,15 @@ const updateAccount = async () => {
     alert('请输入新密码')
     return
   }
-  
+  if (!account.currentPassword) {
+    alert('请输入当前密码')
+    return
+  }
+  if (account.password.length < 8) {
+    alert('新密码至少需要 8 个字符')
+    return
+  }
+
   const token = localStorage.getItem('token')
   try {
     const res = await fetch('/api/auth/change-password', {
@@ -308,12 +337,13 @@ const updateAccount = async () => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ newPassword: account.password })
+      body: JSON.stringify({ currentPassword: account.currentPassword, newPassword: account.password })
     })
-    
+
     const data = await res.json()
     if (res.ok) {
       alert('✅ 密码修改成功！')
+      account.currentPassword = ''
       account.password = ''
     } else {
       alert('❌ 密码修改失败: ' + (data.error || '未知错误'))

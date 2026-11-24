@@ -1,16 +1,18 @@
-version: '3.8'
-
 services:
   app:
-    image: laowang-subscription:latest
-    build: .
+    image: ghcr.io/tony-wang1990/laowang-subscription:main
     container_name: laowang-subscription
     restart: always
     ports:
-      - "8080:8080"
+      - "3001:3001"
     volumes:
       - ./database:/app/database
     environment:
       - NODE_ENV=production
-      - JWT_SECRET=change_this_to_a_secure_secret
-      - HASH_SECRET=change_this_to_a_secure_secret
+      - TZ=Asia/Shanghai
+      - PORT=3001
+      # 必填：JWT 签名密钥，请设置一个长随机字符串（不要使用示例/占位值）。
+      # 未设置时服务仍可启动，但每次重启都会随机生成，导致已有登录全部失效。
+      - JWT_SECRET=${JWT_SECRET:-}
+      # 可选：DEMO_DATA=1 时首次启动灌入演示订阅数据；默认关闭。
+      - DEMO_DATA=${DEMO_DATA:-0}

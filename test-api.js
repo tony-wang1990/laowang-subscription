@@ -16,10 +16,15 @@ function request(options, data) {
 async function runTest() {
     try {
         console.log('Testing Login...');
-        const loginData = JSON.stringify({ username: 'admin', password: 'admin' });
+        // 账号密码通过环境变量传入（首次启动的随机初始口令见启动日志）；
+        // 本仓库已无默认口令，不要把真实口令写进脚本。
+        const loginData = JSON.stringify({
+            username: process.env.TEST_ADMIN_USER || 'admin',
+            password: process.env.TEST_ADMIN_PASS || '',
+        });
         const loginRes = await request({
             hostname: 'localhost',
-            port: 8080,
+            port: 3001,
             path: '/api/auth/login',
             method: 'POST',
             headers: {
@@ -40,7 +45,7 @@ async function runTest() {
         console.log('\nTesting Get Subscriptions...');
         const subRes = await request({
             hostname: 'localhost',
-            port: 8080,
+            port: 3001,
             path: '/api/subscriptions',
             method: 'GET',
             headers: {

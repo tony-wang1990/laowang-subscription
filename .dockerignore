@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+.git
+.github
+database
+*.db
+dist
+.env
+*.md
+docs
+test-*.js
+demo_setup.js
+.DS_Store

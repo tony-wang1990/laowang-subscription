@@ -31,6 +31,5 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT
 );
 
--- Insert default admin user (password: admin123)
--- Hash: $2a$10$X7V.j5.j5.j5.j5.j5.j5.j5.j5.j5.j5.j5.j5.j5.j5.j5
--- Note: Real hash will be generated in code, this is just a comment
+-- 注意：本文件只建表，不创建任何默认用户。
+-- 首次启动由 server/db.js 在用户表为空时创建 admin 账号并生成随机口令（仅日志打印一次）。

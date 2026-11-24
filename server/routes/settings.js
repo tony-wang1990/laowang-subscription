@@ -19,21 +19,74 @@ const authenticate = (req, res, next) => {
 
 router.use(authenticate);
 
-// Get all settings
+// 允许写入的设置 key 白名单（与前端 Settings.vue 实际使用的字段一致）
+const ALLOWED_SETTINGS_KEYS = new Set([
+    'show_lunar',
+    'timezone',
+    'cron_expression',
+    'enable_telegram',
+    'enable_bark',
+    'enable_webhook',
+    'enable_wechat',
+    'enable_email',
+    'api_token',
+    'telegram_token',
+    'telegram_chat_id',
+    'bark_url',
+    'webhook_url',
+    'wechat_key',
+    'email_host',
+    'email_port',
+    'email_user',
+    'email_pass',
+    'email_to',
+]);
+
+// 敏感字段：GET 只返回是否已配置，绝不返回原始值
+// （含 URL 的字段也视为敏感，因为 Bark/Webhook URL 中带有密钥）
+const SENSITIVE_SETTINGS_KEYS = new Set([
+    'api_token',
+    'telegram_token',
+    'bark_url',
+    'webhook_url',
+    'wechat_key',
+    'email_pass',
+]);
+
+// Get all settings — 敏感字段脱敏返回 { configured: true/false }
 router.get('/', (req, res) => {
     db.all('SELECT * FROM settings', [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         const settings = {};
         rows.forEach(row => {
-            settings[row.key] = row.value;
+            if (SENSITIVE_SETTINGS_KEYS.has(row.key)) {
+                settings[row.key] = { configured: Boolean(row.value) };
+            } else {
+                settings[row.key] = row.value;
+            }
         });
         res.json(settings);
     });
 });
 
-// Update settings (bulk or single)
+// Update settings (bulk or single) — 仅允许白名单 key
 router.post('/', (req, res) => {
     const settings = req.body; // Expect object { key: value, key2: value2 }
+
+    if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
+        return res.status(400).json({ error: 'Settings must be an object' });
+    }
+
+    const entries = Object.entries(settings);
+    const unknownKeys = entries.map(([key]) => key).filter((key) => !ALLOWED_SETTINGS_KEYS.has(key));
+    if (unknownKeys.length > 0) {
+        return res.status(400).json({ error: `Unknown settings keys: ${unknownKeys.join(', ')}` });
+    }
+
+    // 过滤掉前端回显的脱敏占位值 { configured: ... }：视为“未改动”，不覆盖原值
+    const writable = entries.filter(([, value]) => {
+        return !(value && typeof value === 'object' && 'configured' in value);
+    });
 
     const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
 
@@ -41,7 +94,11 @@ router.post('/', (req, res) => {
         try {
             db.run('BEGIN TRANSACTION');
 
-            for (const [key, value] of Object.entries(settings)) {
+            for (const [key, value] of writable) {
+                if (value === null || value === undefined) continue;
+                if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean') {
+                    throw new Error(`Invalid value type for setting "${key}"`);
+                }
                 stmt.run(key, String(value));
             }
 

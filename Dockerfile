@@ -23,18 +23,24 @@ COPY package*.json ./
 
 # Install production dependencies directly in the container
 # This ensures native modules (sqlite3) must work on this specific architecture/OS
-RUN npm install --production
+RUN npm ci --omit=dev
 
 # Copy built artifacts
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/server ./server
+COPY --from=builder --chown=node:node /app/dist ./dist
+COPY --from=builder --chown=node:node /app/server ./server
 
-# Pre-create database directory
-RUN mkdir -p /app/database && chmod 777 /app/database
+# Pre-create database directory (owned by the non-root user)
+RUN mkdir -p /app/database && chown node:node /app/database && chmod 755 /app/database
 
 ENV NODE_ENV=production
 ENV PORT=3001
 EXPOSE 3001
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:3001/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+
+# Run as non-root user
+USER node
 
 # Use dumb-init
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
